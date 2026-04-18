@@ -8,20 +8,30 @@ The app is a React/Vite static web app with a small Python "hardware bridge" scr
 
 ## 1. What You're Getting
 
-You'll receive a ZIP (or git clone) with this folder structure:
+The project lives on GitHub here:
 
+### 🔗 Repository
+**https://github.com/mohsinrazajaved/pi-demo-cycle-pro**
+
+Clone it anywhere (your Mac, PC, or directly on the Pi):
+```bash
+git clone https://github.com/mohsinrazajaved/pi-demo-cycle-pro.git cycle-stats-pro
+cd cycle-stats-pro
+```
+
+Folder structure:
 ```
 cycle-stats-pro/
-├── dist/                 ← pre-built web app (static HTML/JS/CSS) — serve this
 ├── encoder.py            ← Python GPIO bridge script (real hardware)
 ├── mock-hardware.py      ← optional: simulate events from a Mac/PC (no Pi)
 ├── DEPLOY_ON_PI.md       ← this file
-├── src/                  ← source code (only needed if rebuilding)
+├── src/                  ← React source code — build with `npm run build`
+├── index.html
 ├── package.json
 └── ...
 ```
 
-The **`dist/`** folder is what actually runs on the Pi. You do **not** need Node.js on the Pi to run the app — `dist/` is pure static files. You only need Node.js to rebuild the app from source.
+> **Note:** The `dist/` folder (built static files) is **not in the repo** — you need to build it once with `npm run build` before serving. This only needs Node.js during the build step, not at runtime.
 
 ---
 
@@ -126,44 +136,33 @@ sudo apt-get install -y unclutter
 
 ---
 
-## 6. Copy the App to the Pi
+## 6. Get the App onto the Pi
 
-You have three options — pick whichever is easiest.
+### Recommended: Clone from GitHub + build on the Pi
 
-### Option A — SCP from the developer's Mac (fastest)
+This is the simplest end-to-end path and keeps you in sync with the latest code.
 
-On the Mac (dev machine), run:
+SSH into the Pi (or work directly on the touchscreen) and run:
+
 ```bash
-scp -r cycle-stats-pro/dist/ pi@<PI_IP>:~/cycle-stats-pro
-scp cycle-stats-pro/encoder.py pi@<PI_IP>:~/cycle-stats-pro/
-```
-
-### Option B — USB drive
-
-1. Copy the `dist/` folder and `encoder.py` to a USB drive.
-2. Plug the USB into the Pi.
-3. Copy to the Pi:
-   ```bash
-   mkdir -p ~/cycle-stats-pro
-   cp -r /media/pi/<USB_NAME>/dist/* ~/cycle-stats-pro/
-   cp /media/pi/<USB_NAME>/encoder.py ~/cycle-stats-pro/
-   ```
-
-### Option C — GitHub / git repo
-
-If the developer pushed to GitHub:
-```bash
+# Clone the repo
 cd ~
-git clone <repo-url> cycle-stats-pro-src
+git clone https://github.com/mohsinrazajaved/pi-demo-cycle-pro.git cycle-stats-pro-src
 cd cycle-stats-pro-src
+
+# Install Node deps (one-time, ~2-3 min)
 npm install
+
+# Build the static web app (~20 sec)
 npm run build
+
+# Move the built files + encoder.py into a clean serving directory
 mkdir -p ~/cycle-stats-pro
 cp -r dist/* ~/cycle-stats-pro/
 cp encoder.py ~/cycle-stats-pro/
 ```
 
-**End state:** The Pi should have this directory:
+**End state:** The Pi will have this directory ready to serve:
 ```
 /home/pi/cycle-stats-pro/
 ├── index.html
@@ -171,6 +170,33 @@ cp encoder.py ~/cycle-stats-pro/
 │   ├── index-XXXXX.js
 │   └── index-XXXXX.css
 └── encoder.py
+```
+
+You can delete the `cycle-stats-pro-src` folder after building if you want to save space — but keep it if you plan to pull updates with `git pull` later.
+
+---
+
+### Alternative paths (if the Pi has no internet)
+
+**Build on your Mac, then SCP:**
+```bash
+# On the Mac
+git clone https://github.com/mohsinrazajaved/pi-demo-cycle-pro.git
+cd pi-demo-cycle-pro
+npm install
+npm run build
+
+# Copy to Pi
+scp -r dist/ pi@<PI_IP>:~/cycle-stats-pro
+scp encoder.py pi@<PI_IP>:~/cycle-stats-pro/
+```
+
+**USB drive:**
+Build on a machine with internet, copy `dist/` + `encoder.py` onto a USB, plug into Pi, then:
+```bash
+mkdir -p ~/cycle-stats-pro
+cp -r /media/pi/<USB_NAME>/dist/* ~/cycle-stats-pro/
+cp /media/pi/<USB_NAME>/encoder.py ~/cycle-stats-pro/
 ```
 
 ---
@@ -353,23 +379,25 @@ Then run the two manual commands from **Section 7** in two terminals.
 
 ## 10. Updating the App Later
 
-When the developer sends a new `dist/` build:
+When the developer pushes new changes to GitHub, pull + rebuild on the Pi:
 
 ```bash
-# Back up old
-mv ~/cycle-stats-pro/index.html ~/cycle-stats-pro/index.html.bak
-
-# Copy new
-scp -r developer-mac:~/cycle-stats-pro/dist/* pi@<PI_IP>:~/cycle-stats-pro/
-# or via USB
-
-# No restart needed — just refresh the browser (Chromium: Ctrl+R)
+cd ~/cycle-stats-pro-src
+git pull
+npm install            # only if package.json changed
+npm run build
+cp -r dist/* ~/cycle-stats-pro/
+cp encoder.py ~/cycle-stats-pro/
+sudo systemctl restart cyclestats-hw   # only if encoder.py changed
 ```
 
-If `encoder.py` changes:
+The browser will pick up the new UI on next refresh (`Ctrl+R` in Chromium). The static web server needs no restart.
+
+If you built on a Mac instead, just rebuild and SCP:
 ```bash
-# Replace the file, then:
-sudo systemctl restart cyclestats-hw
+# On Mac
+git pull && npm run build
+scp -r dist/* pi@<PI_IP>:~/cycle-stats-pro/
 ```
 
 ---

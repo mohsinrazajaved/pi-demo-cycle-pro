@@ -1,0 +1,415 @@
+# Cycle Stats Pro — Raspberry Pi Deployment Guide
+
+This guide is for running **Cycle Stats Pro** on a Raspberry Pi 5 with a Waveshare 7" HDMI (H) 1024×600 touchscreen and testing the hardware inputs (rotary encoder + push button).
+
+The app is a React/Vite static web app with a small Python "hardware bridge" script that reads GPIO pins and sends events to the browser via a local WebSocket. There is no backend, no database, no internet required — everything runs locally on the Pi.
+
+---
+
+## 1. What You're Getting
+
+You'll receive a ZIP (or git clone) with this folder structure:
+
+```
+cycle-stats-pro/
+├── dist/                 ← pre-built web app (static HTML/JS/CSS) — serve this
+├── encoder.py            ← Python GPIO bridge script (real hardware)
+├── mock-hardware.py      ← optional: simulate events from a Mac/PC (no Pi)
+├── DEPLOY_ON_PI.md       ← this file
+├── src/                  ← source code (only needed if rebuilding)
+├── package.json
+└── ...
+```
+
+The **`dist/`** folder is what actually runs on the Pi. You do **not** need Node.js on the Pi to run the app — `dist/` is pure static files. You only need Node.js to rebuild the app from source.
+
+---
+
+## 2. Hardware You Need
+
+| Item | Notes |
+|---|---|
+| Raspberry Pi 5 | 4GB+ recommended |
+| Waveshare 7" HDMI LCD (H) — 1024×600 | https://www.waveshare.com/wiki/7inch_HDMI_LCD_(H)_(with_case) |
+| Rotary encoder (KY-040 or similar) | 3-pin: CLK, DT, GND (+3.3V if VCC present) |
+| Push button (momentary) | Any SPST button |
+| LED (5mm) | Optional — lights up and flashes on button press |
+| 220Ω resistor | In series with the LED |
+| Jumper wires | 6–8 of them |
+| microSD card 16GB+ | For Raspberry Pi OS |
+| HDMI cable | To connect Pi → screen |
+| USB-C power supply for Pi | 5V/5A for Pi 5 |
+
+---
+
+## 3. Wiring
+
+Use **BCM pin numbering** (the "GPIO XX" numbers, not physical pin numbers).
+
+### Rotary Encoder (KY-040)
+
+| Encoder pin | Pi pin (BCM) | Physical pin |
+|---|---|---|
+| CLK | GPIO 17 | Pin 11 |
+| DT  | GPIO 18 | Pin 12 |
+| GND | GND     | Pin 9 or any GND |
+| `+` / VCC (if present) | 3.3V | Pin 1 or 17 |
+
+The encoder has no SW (push) pin wired — the push-button is separate.
+
+### Push Button
+
+| Button terminal | Pi pin (BCM) | Physical pin |
+|---|---|---|
+| One leg | GPIO 23 | Pin 16 |
+| Other leg | GND | Any GND |
+
+(The script uses Pi's internal pull-up resistor, so no external pull-up is needed. The button shorts GPIO 23 → GND when pressed.)
+
+### LED (optional, for press feedback)
+
+| LED leg | Connection |
+|---|---|
+| Long leg (anode, +) | → 220Ω resistor → GPIO 24 (Pi physical pin 18) |
+| Short leg (cathode, –) | GND |
+
+If you don't have an LED handy, skip it — the script still works.
+
+---
+
+## 4. Raspberry Pi OS Setup
+
+### Install Raspberry Pi OS
+
+1. Use Raspberry Pi Imager → **Raspberry Pi OS (64-bit) with Desktop** → write to SD.
+2. Pre-configure user (e.g., `pi`), WiFi, SSH enabled.
+3. Insert SD, connect HDMI + touchscreen + power. Boot.
+
+### Enable the Waveshare 7" screen
+
+Most Waveshare HDMI screens are plug-and-play on a Pi, but the 1024×600 variant sometimes needs a config. Edit `/boot/firmware/config.txt`:
+
+```bash
+sudo nano /boot/firmware/config.txt
+```
+
+Ensure these are present (add at the end if missing):
+
+```
+hdmi_group=2
+hdmi_mode=87
+hdmi_cvt=1024 600 60 6 0 0 0
+hdmi_drive=1
+```
+
+Save and reboot: `sudo reboot`.
+
+---
+
+## 5. Install Dependencies on the Pi
+
+Once logged into the Pi (either on the touchscreen or via `ssh pi@<pi-ip>`):
+
+```bash
+# Node.js — only needed for `serve`, the static file server
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+sudo npm install -g serve
+
+# Python 3 + hardware libs (Python 3 is usually pre-installed)
+sudo apt-get install -y python3-pip
+pip3 install websockets RPi.GPIO
+
+# Optional: hides the mouse cursor in kiosk mode
+sudo apt-get install -y unclutter
+```
+
+---
+
+## 6. Copy the App to the Pi
+
+You have three options — pick whichever is easiest.
+
+### Option A — SCP from the developer's Mac (fastest)
+
+On the Mac (dev machine), run:
+```bash
+scp -r cycle-stats-pro/dist/ pi@<PI_IP>:~/cycle-stats-pro
+scp cycle-stats-pro/encoder.py pi@<PI_IP>:~/cycle-stats-pro/
+```
+
+### Option B — USB drive
+
+1. Copy the `dist/` folder and `encoder.py` to a USB drive.
+2. Plug the USB into the Pi.
+3. Copy to the Pi:
+   ```bash
+   mkdir -p ~/cycle-stats-pro
+   cp -r /media/pi/<USB_NAME>/dist/* ~/cycle-stats-pro/
+   cp /media/pi/<USB_NAME>/encoder.py ~/cycle-stats-pro/
+   ```
+
+### Option C — GitHub / git repo
+
+If the developer pushed to GitHub:
+```bash
+cd ~
+git clone <repo-url> cycle-stats-pro-src
+cd cycle-stats-pro-src
+npm install
+npm run build
+mkdir -p ~/cycle-stats-pro
+cp -r dist/* ~/cycle-stats-pro/
+cp encoder.py ~/cycle-stats-pro/
+```
+
+**End state:** The Pi should have this directory:
+```
+/home/pi/cycle-stats-pro/
+├── index.html
+├── assets/
+│   ├── index-XXXXX.js
+│   └── index-XXXXX.css
+└── encoder.py
+```
+
+---
+
+## 7. First Manual Test (before autostart)
+
+Run everything manually once to confirm it works.
+
+### Terminal 1 — static web server
+```bash
+cd ~/cycle-stats-pro
+serve -s . -l 5173
+```
+You should see: `Accepting connections at http://localhost:5173`
+
+### Terminal 2 — hardware bridge
+```bash
+cd ~/cycle-stats-pro
+python3 encoder.py
+```
+You should see:
+```
+Cycle Stats Pro hardware bridge starting...
+  Encoder CLK=17, DT=18
+  Button PIN=23, LED=24
+  WebSocket server on ws://localhost:8765
+```
+
+### Browser
+Open Chromium on the Pi and go to `http://localhost:5173`.
+
+You should see the Home screen. Pick a program (e.g., "GC Fat Burn") → duration (e.g., 120 min) → you land on the BikeComputer workout screen.
+
+### Test the hardware
+
+- **Turn the encoder clockwise** → resistance goes up by 1 each click. Visible in the program bar display (the orange highlighted bar moves up).
+- **Turn the encoder counter-clockwise** → resistance goes down by 1.
+- **Press the button** → screen jumps to the Heart Rate monitor, countdown badge "Returning in 15s" appears top-right, at 0s it returns to the workout with everything preserved. The LED flashes briefly when pressed.
+
+In Terminal 2 you should see the bridge print events as they happen.
+
+If something doesn't work, see **Troubleshooting** at the bottom.
+
+---
+
+## 8. Auto-start on Boot (Kiosk Mode)
+
+Once manual testing works, set it up to start automatically at boot with no interaction required.
+
+### systemd service — static web server
+
+```bash
+sudo nano /etc/systemd/system/cyclestats-web.service
+```
+Paste:
+```ini
+[Unit]
+Description=Cycle Stats Pro — static web server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/serve -s /home/pi/cycle-stats-pro -l 5173
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### systemd service — GPIO bridge
+
+```bash
+sudo nano /etc/systemd/system/cyclestats-hw.service
+```
+Paste:
+```ini
+[Unit]
+Description=Cycle Stats Pro — GPIO hardware bridge
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/cycle-stats-pro/encoder.py
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### Enable + start both
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable cyclestats-web cyclestats-hw
+sudo systemctl start  cyclestats-web cyclestats-hw
+
+# Verify
+systemctl status cyclestats-web
+systemctl status cyclestats-hw
+```
+Both should be **active (running)** in green.
+
+### Chromium kiosk autostart
+
+```bash
+mkdir -p ~/.config/autostart
+nano ~/.config/autostart/cyclestats-kiosk.desktop
+```
+Paste:
+```ini
+[Desktop Entry]
+Type=Application
+Name=Cycle Stats Kiosk
+Exec=bash -c "sleep 10 && unclutter -idle 0 & chromium-browser --kiosk --noerrdialogs --disable-infobars --disable-session-crashed-bubble --disable-translate --incognito --touch-events=enabled --check-for-update-interval=31536000 http://localhost:5173"
+X-GNOME-Autostart-enabled=true
+```
+
+### Reboot and verify
+```bash
+sudo reboot
+```
+
+When the Pi boots:
+1. Desktop appears briefly.
+2. Chromium auto-launches full-screen.
+3. Cycle Stats Pro Home screen shows.
+4. The encoder and button already work.
+
+No keyboard, no mouse, no clicking required. The bike is ready to use.
+
+---
+
+## 9. Troubleshooting
+
+### Blank white screen in browser
+- Open DevTools in Chromium (`Ctrl+Shift+I`) → Console tab. Any red errors will tell you what's wrong.
+- Hard-refresh with `Ctrl+Shift+R`.
+
+### Encoder doesn't work
+- Confirm `encoder.py` is running: `sudo systemctl status cyclestats-hw`
+- Check the wiring: CLK to GPIO 17, DT to GPIO 18, GND to GND.
+- Test without the UI:
+  ```bash
+  sudo systemctl stop cyclestats-hw
+  python3 ~/cycle-stats-pro/encoder.py
+  ```
+  Turn the encoder — you should see output lines being sent. If nothing, it's a wiring/hardware issue.
+
+### Button doesn't do anything
+- Test without the UI (same as above) and press the button — the script should print/send an event.
+- Make sure you wired GPIO 23 to button, and the **other leg to GND** (not 3.3V).
+
+### React doesn't receive events even though Python sees them
+- The React app only connects to the WebSocket when on the BikeComputer workout screen. Pick a program and start a workout first.
+- In Chromium DevTools → Network tab → WS filter — you should see a connection to `ws://localhost:8765`. If it's red/failed, the bridge isn't running.
+
+### "Address already in use" when starting encoder.py
+- Another copy is already running:
+  ```bash
+  sudo systemctl stop cyclestats-hw
+  pkill -f encoder.py
+  ```
+
+### Logs
+```bash
+# Web server
+journalctl -u cyclestats-web -f
+
+# Hardware bridge (shows button presses, encoder events)
+journalctl -u cyclestats-hw -f
+```
+
+### Want to switch back from autostart to manual testing?
+```bash
+sudo systemctl stop cyclestats-web cyclestats-hw
+sudo systemctl disable cyclestats-web cyclestats-hw
+```
+Then run the two manual commands from **Section 7** in two terminals.
+
+---
+
+## 10. Updating the App Later
+
+When the developer sends a new `dist/` build:
+
+```bash
+# Back up old
+mv ~/cycle-stats-pro/index.html ~/cycle-stats-pro/index.html.bak
+
+# Copy new
+scp -r developer-mac:~/cycle-stats-pro/dist/* pi@<PI_IP>:~/cycle-stats-pro/
+# or via USB
+
+# No restart needed — just refresh the browser (Chromium: Ctrl+R)
+```
+
+If `encoder.py` changes:
+```bash
+# Replace the file, then:
+sudo systemctl restart cyclestats-hw
+```
+
+---
+
+## 11. Demo Behavior (For Reference)
+
+The app simulates an exercise bike workout with these fixed values:
+
+| Metric | Value |
+|---|---|
+| Watts | 140 (fixed) |
+| RPM | 65 (fixed) |
+| Speed | 10 km/h |
+| Calories | 500/hour (8.33/min) |
+| Program duration | 2 hours (default) |
+| Interval | 2-minute countdown, auto-restarts |
+| Heart rate (when on HR screen) | 120 BPM |
+| Training zone | Fat Burn (68% of max HR) |
+
+The **only** things the user can physically affect:
+
+- **Rotary encoder** → changes resistance (tension) level up or down
+- **Push button** → shows heart rate monitor for 15 seconds, then auto-returns
+
+Everything else is simulated.
+
+---
+
+## 12. Quick Reference Card
+
+| Task | Command |
+|---|---|
+| Start web server manually | `serve -s ~/cycle-stats-pro -l 5173` |
+| Start hardware bridge manually | `python3 ~/cycle-stats-pro/encoder.py` |
+| Restart hardware bridge | `sudo systemctl restart cyclestats-hw` |
+| View hardware events live | `journalctl -u cyclestats-hw -f` |
+| Reboot Pi | `sudo reboot` |
+| Find Pi's IP | `hostname -I` |
+| Open app in Chromium | `http://localhost:5173` |
+
+---
+
+**Questions?** Contact the developer.

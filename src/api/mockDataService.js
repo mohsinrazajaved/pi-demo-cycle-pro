@@ -1,6 +1,6 @@
 /**
  * mockDataService.js
- * Offline-first localStorage CRUD — replaces all Base44/cloud API calls.
+ * Offline-first localStorage CRUD.
  * Stores Profiles and Workouts locally, no network required.
  */
 

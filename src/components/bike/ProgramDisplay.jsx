@@ -2,8 +2,28 @@ import React, { useRef, useEffect, useState } from 'react';
 
 const MAX_RESISTANCE = 30;
 const ACTIVE_SLOT = 10;
-const GAME_OVER_IMAGE = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/698a9a4bff14678e47cf83bf/9bdf72da7_gameover.png';
 const IMAGE_SLOTS = 4;
+
+// "WORKOUT COMPLETE" banner — styled text instead of an external image
+function GameOverBanner({ style }) {
+  return (
+    <div style={{ ...style, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{
+        fontFamily: 'monospace',
+        fontWeight: 900,
+        fontSize: '3.5vh',
+        color: '#FF3F03',
+        textShadow: '0 0 20px rgba(255,63,3,0.8), 0 0 40px rgba(255,63,3,0.4)',
+        letterSpacing: '0.1em',
+        whiteSpace: 'nowrap',
+        textAlign: 'center',
+        lineHeight: 1,
+      }}>
+        WORKOUT<br/>COMPLETE
+      </div>
+    </div>
+  );
+}
 const TOTAL_SLOTS = 21;
 const EQ_PHASE = 3000;    // ms of equalizer animation
 const DROP_PHASE = 3000;  // ms for bars to drop to zero
@@ -204,11 +224,9 @@ export default function ProgramDisplay({ programData, currentPosition, resistanc
           );
         })}
 
-        {/* Normal: GAME OVER image scrolling in from right */}
+        {/* Normal: WORKOUT COMPLETE banner scrolling in from right */}
         {imageVisible && (
-          <img
-            src={GAME_OVER_IMAGE}
-            alt="GAME OVER"
+          <GameOverBanner
             style={{
               position: 'absolute',
               top: 0,
@@ -216,7 +234,6 @@ export default function ProgramDisplay({ programData, currentPosition, resistanc
               height: '100%',
               width: `${(IMAGE_SLOTS / TOTAL_SLOTS) * 100}%`,
               left: `${(imageStartDisplay / TOTAL_SLOTS) * 100}%`,
-              objectFit: 'fill',
               pointerEvents: 'none',
             }}
           />
@@ -239,9 +256,7 @@ export default function ProgramDisplay({ programData, currentPosition, resistanc
                 100% { opacity: 1; transform: translateX(-50%) scale(1); filter: brightness(1); }
               }
             `}</style>
-            <img
-              src={GAME_OVER_IMAGE}
-              alt="GAME OVER"
+            <GameOverBanner
               style={{
                 position: 'absolute',
                 top: 0,
@@ -250,7 +265,6 @@ export default function ProgramDisplay({ programData, currentPosition, resistanc
                 width: `${(IMAGE_SLOTS / TOTAL_SLOTS) * 100}%`,
                 left: '50%',
                 transform: 'translateX(-50%)',
-                objectFit: 'fill',
                 pointerEvents: 'none',
                 animation: 'gameOverFlicker 1.8s ease-out forwards',
               }}

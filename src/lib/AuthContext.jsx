@@ -1,6 +1,6 @@
 /**
  * AuthContext.jsx — Offline stub
- * All Base44 / auth calls removed. App runs fully offline with no auth required.
+ * App runs fully offline with no auth required.
  */
 import React, { createContext, useContext } from 'react';
 

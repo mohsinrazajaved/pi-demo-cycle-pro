@@ -99,7 +99,7 @@ export default function WorkoutHistory() {
       <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.6), transparent)' }} />
 
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b border-zinc-800/50">
+      <div className="flex-shrink-0 flex items-center gap-2 px-5 py-3 border-b border-zinc-800/50">
         <Link
           to={createPageUrl('Home')}
           onClick={() => playTypewriterClick()}
@@ -134,7 +134,7 @@ export default function WorkoutHistory() {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-3 py-2">
+      <div className="flex-1 overflow-y-auto px-5 py-4">
         <div className="max-w-2xl mx-auto">
 
         {isLoading ? (

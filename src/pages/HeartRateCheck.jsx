@@ -193,7 +193,7 @@ export default function HeartRateCheck() {
   };
 
   return (
-    <div className="h-screen w-screen text-white overflow-hidden flex flex-col p-2 relative"
+    <div className="h-screen w-screen text-white overflow-hidden flex flex-col p-5 relative"
       style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, #1a0800 0%, #0a0a0a 60%, #050505 100%)' }}
     >
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.5), transparent)' }} />
@@ -224,10 +224,10 @@ export default function HeartRateCheck() {
         setTimeMultiplier={setTimeMultiplier}
       />
 
-      {/* Main Content — fixed heights tuned for 800×480 */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Header with Time Displays — fixed 62px */}
-        <div className="flex gap-2 mb-1" style={{ height: '62px', flexShrink: 0 }}>
+      {/* Main Content — fixed heights tuned for 1024×600 */}
+      <div className="flex-1 flex flex-col min-h-0 gap-3">
+        {/* Header with Time Displays — fixed 72px */}
+        <div className="flex gap-2.5" style={{ height: '72px', flexShrink: 0 }}>
           {[
             { label: 'Interval', value: formatTime(intervalSecondsRemaining) },
             { label: 'Program',  value: formatTimeRemaining(), large: isInfinity },
@@ -248,15 +248,15 @@ export default function HeartRateCheck() {
         </div>
 
         {/* Centre: Gauge + Info — flex-1 takes remaining space */}
-        <div className="flex gap-2 min-h-0" style={{ flex: '1 1 0' }}>
+        <div className="flex gap-2.5 min-h-0" style={{ flex: '1 1 0' }}>
           {/* Heart Rate Gauge - 2/3 width */}
-          <div className="w-2/3 rounded-xl border border-zinc-700/40 p-2 min-h-0"
+          <div className="w-2/3 rounded-xl border border-zinc-700/40 p-3 min-h-0"
             style={{ background: 'linear-gradient(180deg, rgba(25,25,25,0.95) 0%, rgba(12,12,12,0.95) 100%)' }}
           >
             <HeartRateGauge heartRate={heartRate} />
           </div>
           {/* Right side - two stacked panels - 1/3 width */}
-          <div className="w-1/3 flex flex-col gap-2 min-h-0">
+          <div className="w-1/3 flex flex-col gap-2.5 min-h-0">
             {/* Training Zone */}
             <div className="flex-1 rounded-xl border border-zinc-700/40 p-2 flex flex-col items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(180deg, rgba(25,25,25,0.95) 0%, rgba(12,12,12,0.95) 100%)' }}>
               <span className="text-[9px] uppercase tracking-wider text-zinc-500 mb-1">Training Zone</span>
@@ -287,8 +287,8 @@ export default function HeartRateCheck() {
           </div>
         </div>
 
-        {/* Bottom: Program Display — fixed 100px */}
-        <div className="mt-1" style={{ height: '100px', flexShrink: 0 }}>
+        {/* Bottom: Program Display — fixed 110px */}
+        <div style={{ height: '110px', flexShrink: 0 }}>
           <ProgramDisplay programData={programData} currentPosition={programPosition} resistance={resistance} isComplete={false} programLabel="" />
         </div>
       </div>

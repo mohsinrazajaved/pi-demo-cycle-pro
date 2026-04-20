@@ -86,7 +86,7 @@ export default function Profile() {
       <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.6), transparent)' }} />
 
       {/* LEFT PANEL — form fields */}
-      <div className="flex flex-col gap-2 p-4 overflow-hidden relative z-10" style={{ width: '360px', flexShrink: 0 }}>
+      <div className="flex flex-col gap-2.5 p-5 overflow-hidden relative z-10" style={{ width: '360px', flexShrink: 0 }}>
 
         {/* Header */}
         <div className="flex gap-2 flex-shrink-0">
@@ -183,7 +183,7 @@ export default function Profile() {
       <div className="w-px bg-zinc-700/40 flex-shrink-0" />
 
       {/* RIGHT PANEL — keyboard */}
-      <div className="flex-1 flex items-center justify-center p-3 min-w-0 relative z-10">
+      <div className="flex-1 flex items-center justify-center p-5 min-w-0 relative z-10">
         {activeField === 'name' ? (
           <QwertyKeyboard value={form.name} onChange={(v) => set('name', v)}
             onClose={() => {}} onPrev={goToPrev} onNext={goToNext} />

@@ -388,7 +388,7 @@ export default function BikeComputer() {
           {/* Top Section */}
           <div className="flex flex-col overflow-hidden" style={{ height: '46%' }}>
             {/* Timer row */}
-            <div className="flex px-2 pt-2 gap-2" style={{ height: '13vh' }}>
+            <div className="flex px-5 pt-5 gap-3" style={{ height: 'calc(13vh + 20px)' }}>
               {[
                 { label: 'Interval', value: formatTime(intervalSecondsRemaining) },
                 { label: 'Program', value: isInfinity ? '∞' : formatTimeRemaining(), large: isInfinity },
@@ -410,7 +410,7 @@ export default function BikeComputer() {
 
             <div className="flex flex-1">
               {/* Calories */}
-              <div className="w-1/2 p-2 flex flex-col">
+              <div className="w-1/2 px-3 py-2 flex flex-col">
                 <div className="flex-1 rounded-xl border border-zinc-700/40 flex flex-col items-center justify-center relative overflow-hidden"
                   style={{ background: 'linear-gradient(180deg, rgba(30,15,5,0.95) 0%, rgba(12,8,4,0.95) 100%)' }}
                 >
@@ -471,7 +471,7 @@ export default function BikeComputer() {
           </div>
 
           {/* Middle Section: Program Display */}
-          <div className="px-2 pb-1" style={{ height: '17%' }}>
+          <div className="px-3 pb-2" style={{ height: '17%' }}>
             <ProgramDisplay
               programData={programData}
               currentPosition={programPosition}
@@ -483,18 +483,18 @@ export default function BikeComputer() {
           </div>
 
           {/* Bottom Section */}
-          <div className="flex items-center px-2 pb-1 overflow-hidden" style={{ height: '37%' }}>
-            <div className="w-[35%] h-full">
+          <div className="flex items-center px-3 pb-3 gap-2.5" style={{ height: '37%' }}>
+            <div className="w-[33%] h-full">
               <SpeedometerGauge value={stats.cadence} max={150} label="RPM" unit="rpm" />
             </div>
-            <div className="flex-1 h-full flex flex-col items-center justify-center rounded-xl border border-zinc-700/40 mx-2 pb-4 relative overflow-hidden"
+            <div className="flex-1 h-full flex flex-col items-center justify-center rounded-xl border border-zinc-700/40 relative overflow-hidden"
               style={{ background: 'linear-gradient(180deg, rgba(20,20,20,0.9) 0%, rgba(10,10,10,0.9) 100%)' }}
             >
               <div className="absolute inset-0 opacity-10" style={{ background: 'radial-gradient(ellipse at 50% 100%, #FF3F03 0%, transparent 60%)' }} />
-              <div className="font-bold text-[#FF3F03] relative z-10" style={{ fontSize: '14.3vh', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}>{stats.distance.toFixed(2)}</div>
-              <span style={{ fontSize: '1.8vh' }} className="uppercase tracking-widest text-zinc-500 relative z-10">KM</span>
+              <div className="font-bold text-[#FF3F03] relative z-10" style={{ fontSize: '13vh', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}>{stats.distance.toFixed(2)}</div>
+              <span style={{ fontSize: '1.8vh' }} className="uppercase tracking-widest text-zinc-500 relative z-10 mt-1">KM</span>
             </div>
-            <div className="w-[35%] h-full">
+            <div className="w-[33%] h-full">
               <SpeedometerGauge value={stats.power} max={300} label="WATTS" unit="watts" />
             </div>
           </div>

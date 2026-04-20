@@ -8,6 +8,10 @@ import SplashScreen from '../components/bike/SplashScreen';
 import ChangeProfileModal from '../components/bike/ChangeProfileModal';
 import VolumeSlider from '../components/bike/VolumeSlider';
 
+// Module-level flag: splash shows once per app session (resets on page reload).
+// Navigating back to Home from another page does NOT trigger it again.
+let splashShownThisSession = false;
+
 const PROGRAM_CHARTS = {
   'gc-fat-burn':    [3,3,3,3,3,3,3,3,3,3],
   'small-plateau':  [2,4,6,6,6,6,6,6,4,2],
@@ -38,7 +42,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [activeProfile, setActiveProfile] = useState(null);
   const [isPoweredOff, setIsPoweredOff] = useState(false);
-  const [showSplash, setShowSplash] = useState(false);
+  const [showSplash, setShowSplash] = useState(!splashShownThisSession); // only on first app load
   const [showChangeProfile, setShowChangeProfile] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [volume, setVolume] = useState(() => Number(localStorage.getItem('bikeVolume') ?? 100));
@@ -65,7 +69,10 @@ export default function Home() {
     { name: 'Large Interval',   id: 'large-interval',   selectTime: true },
   ];
 
-  const handleSplashComplete = useCallback(() => setShowSplash(false), []);
+  const handleSplashComplete = useCallback(() => {
+    splashShownThisSession = true;
+    setShowSplash(false);
+  }, []);
 
   const handleProgramSelect = (program) => {
     playTypewriterClick();
@@ -107,7 +114,7 @@ export default function Home() {
         />
       )}
 
-      <div className="flex-1 flex flex-col p-3 gap-2 min-h-0">
+      <div className="flex-1 flex flex-col p-4 gap-3 min-h-0">
 
         {/* Top bar */}
         <div className="flex gap-2 flex-shrink-0" style={{ height: '60px' }}>

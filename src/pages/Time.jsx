@@ -49,7 +49,7 @@ export default function Time() {
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.6), transparent)' }} />
 
       {/* Header */}
-      <div className="flex-shrink-0 px-4 pt-4 pb-3 flex items-center gap-3">
+      <div className="flex-shrink-0 px-5 pt-4 pb-3 flex items-center gap-3">
         <button
           onClick={() => { playTypewriterClick(); navigate(createPageUrl('Home')); }}
           className="w-10 h-10 rounded-xl border border-zinc-700/50 flex items-center justify-center transition-all hover:border-[#FF3F03]/40 active:scale-95"
@@ -66,7 +66,7 @@ export default function Time() {
       </div>
 
       {/* Grid */}
-      <div className="flex-1 px-4 pb-4 grid grid-cols-5 grid-rows-3 gap-2.5">
+      <div className="flex-1 px-5 pb-5 grid grid-cols-5 grid-rows-3 gap-3">
         {TIME_OPTIONS.map((opt) => {
           const isSelected = selectedTime === opt.value;
           const isInfinity = opt.value === Infinity;

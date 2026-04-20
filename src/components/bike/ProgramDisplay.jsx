@@ -1,8 +1,20 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 const MAX_RESISTANCE = 30;
 const ACTIVE_SLOT = 10;
 const IMAGE_SLOTS = 4;
+const TOTAL_SLOTS = 21;
+const EQ_PHASE = 3000;    // ms of equalizer animation
+const DROP_PHASE = 3000;  // ms for bars to drop to zero
+
+// Each bar gets its own random frequency, phase, amplitude, and drop delay
+const EQ_PARAMS = Array(TOTAL_SLOTS).fill(null).map(() => ({
+  freq: 0.6 + Math.random() * 1.5,
+  phase: Math.random() * Math.PI * 2,
+  min: 15 + Math.random() * 25,
+  max: 50 + Math.random() * 45,
+  dropDelay: Math.random() * DROP_PHASE * 0.8,
+}));
 
 // "WORKOUT COMPLETE" banner — styled text instead of an external image
 function GameOverBanner({ style }) {
@@ -24,18 +36,6 @@ function GameOverBanner({ style }) {
     </div>
   );
 }
-const TOTAL_SLOTS = 21;
-const EQ_PHASE = 3000;    // ms of equalizer animation
-const DROP_PHASE = 3000;  // ms for bars to drop to zero
-
-// Each bar gets its own random frequency, phase, amplitude, and drop delay
-const EQ_PARAMS = Array(TOTAL_SLOTS).fill(null).map(() => ({
-  freq: 0.6 + Math.random() * 1.5,
-  phase: Math.random() * Math.PI * 2,
-  min: 15 + Math.random() * 25,
-  max: 50 + Math.random() * 45,
-  dropDelay: Math.random() * DROP_PHASE * 0.8, // each bar starts dropping at a random time
-}));
 
 // --- Audio via unlocked HTML Audio element ---
 // We keep a silent audio element that gets "unlocked" on first user gesture,

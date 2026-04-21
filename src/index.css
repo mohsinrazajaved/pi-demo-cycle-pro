@@ -84,24 +84,22 @@
     -webkit-touch-callout: none;
   }
 
-  body {
-    @apply bg-background text-foreground;
-    /* Prevent bounce-scroll on Pi kiosk */
+  html, body {
     overscroll-behavior: none;
     overflow: hidden;
-    /* Force exactly 1024×600 — matches Waveshare 7" HDMI (H) panel */
-    width: 1024px;
-    height: 600px;
-    max-width: 1024px;
-    max-height: 600px;
+    height: 100%;
+    width: 100%;
   }
 
-  html {
-    overflow: hidden;
+  body {
+    @apply bg-background text-foreground;
   }
 
-  /* Make sure full-screen pages fill exactly 1024×600 */
-  .h-screen { height: 600px !important; }
-  .w-screen { width: 1024px !important; }
-  .min-h-screen { min-height: 600px !important; }
+  /* Full-screen pages fill whatever viewport is available.
+     On the Waveshare 7" panel that's 1024×600; in a dev browser it
+     adapts to the window so designers can test at different sizes
+     without content getting clipped. */
+  .h-screen { height: 100vh !important; }
+  .w-screen { width: 100vw !important; }
+  .min-h-screen { min-height: 100vh !important; }
 }

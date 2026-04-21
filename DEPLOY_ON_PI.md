@@ -131,8 +131,11 @@ sudo apt-get install -y python3-websockets
 # Note: on Pi OS Bookworm, install websockets via apt (not pip) to avoid
 # the externally-managed-environment error. RPi.GPIO is pre-installed.
 
-# Optional: hides the mouse cursor in kiosk mode
-sudo apt-get install -y unclutter
+# Kiosk utilities
+sudo apt-get install -y unclutter   # hides mouse cursor
+sudo apt-get install -y feh         # sets boot splash as X root background
+sudo apt-get install -y imagemagick # generates the splash PNG
+sudo apt-get install -y plymouth plymouth-themes  # shutdown splash screen
 ```
 
 ---
@@ -331,14 +334,21 @@ Paste:
 xset s off
 xset -dpms
 xset s noblank
+xrdb -merge ~/.Xresources
 unclutter -idle 0 &
+feh --bg-fill ~/splash.png
 exec chromium --kiosk --noerrdialogs --disable-infobars \
   --disable-session-crashed-bubble --disable-translate \
   --incognito --touch-events=enabled \
   --check-for-update-interval=31536000 \
+  --disable-background-networking \
+  --disable-default-apps \
+  --no-first-run \
   --password-store=basic \
   http://localhost:5173
 ```
+
+> `feh --bg-fill ~/splash.png` sets the splash as the X root window background instantly when X starts. It stays visible while Chromium loads and is covered automatically once the app renders.
 
 **Step 3 — Auto-start X on login** (add to `~/.bash_profile`):
 
@@ -386,34 +396,152 @@ EOF
 echo 'Xcursor.theme: blank-cursor' >> ~/.Xresources
 ```
 
-**Step 3 — Load the theme in `~/.xinitrc`:**
-
-Add `xrdb -merge ~/.Xresources` before the `exec chromium` line:
-
-```bash
-#!/bin/bash
-xset s off
-xset -dpms
-xset s noblank
-xrdb -merge ~/.Xresources
-unclutter -idle 0 &
-exec chromium --kiosk ...
-```
-
 ### Reboot and verify
 
 ```bash
 sudo reboot
 ```
 
-Boot sequence: **CLI autologin → bash_profile triggers startx → xinitrc launches Chromium directly.**
+Boot sequence: **CLI autologin → bash_profile triggers startx → xinitrc shows splash → Chromium launches.**
 
 When the Pi boots:
 
-1. Cycle Stats Pro loads immediately — no desktop, no taskbar, no dialogs.
-2. The encoder and button already work.
+1. Splash logo appears immediately when X starts.
+2. Cycle Stats Pro loads — no desktop, no taskbar, no dialogs.
+3. The encoder and button already work.
 
 No keyboard, no mouse, no clicking required. The bike is ready to use.
+
+---
+
+## 8a. Silent Boot + Logo
+
+This section configures the Pi to suppress all kernel/boot text and show the Cycle Stats Pro logo from boot through shutdown.
+
+### Silent kernel boot
+
+Edit `/boot/firmware/cmdline.txt` — the entire file must remain a **single line**:
+
+```bash
+sudo nano /boot/firmware/cmdline.txt
+```
+
+Ensure the line contains these flags (add any that are missing). Remove `console=tty1` if present:
+
+```text
+console=serial0,115200 root=PARTUUID=XXXXXXXX-XX rootfstype=ext4 fsck.repair=yes rootwait quiet splash plymouth.ignore-serial-consoles loglevel=0 logo.nologo vt.global_cursor_default=0 fbcon=map:99
+```
+
+| Flag | Effect |
+|---|---|
+| `quiet splash` | Suppress kernel messages, enable Plymouth |
+| `loglevel=0` | Suppress all but critical kernel output |
+| `logo.nologo` | Remove the Pi rainbow logo |
+| `vt.global_cursor_default=0` | Hide the text cursor |
+| `fbcon=map:99` | Disable framebuffer console (prevents kernel text appearing) |
+| `console=serial0,115200` | Keep serial for SSH debugging; remove `console=tty1` |
+
+Also ensure `/boot/firmware/config.txt` contains:
+
+```text
+auto_initramfs=1
+```
+
+This tells the bootloader to load the initramfs (required for Plymouth).
+
+### Generate the splash image
+
+```bash
+convert -size 1024x600 xc:#0a0a0a \
+  -font DejaVu-Sans-Bold \
+  -pointsize 90 -fill white \
+  -gravity Center -annotate +0-40 "CYCLE STATS" \
+  -pointsize 40 -fill "#FF3F03" \
+  -gravity Center -annotate +0+60 "PRO" \
+  ~/splash.png
+```
+
+Update the resolution (`1024x600`) if your screen is different.
+
+### Plymouth shutdown splash
+
+Plymouth handles the shutdown screen. Configure it to use the same image:
+
+```bash
+# Create theme directory
+sudo mkdir -p /usr/share/plymouth/themes/cyclestats
+
+# Copy splash image
+sudo cp ~/splash.png /usr/share/plymouth/themes/cyclestats/logo.png
+
+# Theme descriptor
+sudo tee /usr/share/plymouth/themes/cyclestats/cyclestats.plymouth > /dev/null << 'EOF'
+[Plymouth Theme]
+Name=CycleStats
+Description=Cycle Stats Pro boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/cyclestats
+ScriptFile=/usr/share/plymouth/themes/cyclestats/cyclestats.script
+EOF
+
+# Theme script — loads and centres the image
+sudo tee /usr/share/plymouth/themes/cyclestats/cyclestats.script > /dev/null << 'EOF'
+logo = Image("logo.png");
+sprite = Sprite(logo);
+sprite.SetX(Window.GetWidth() / 2 - logo.GetWidth() / 2);
+sprite.SetY(Window.GetHeight() / 2 - logo.GetHeight() / 2);
+EOF
+
+# Plymouth daemon config
+sudo tee /etc/plymouth/plymouthd.conf > /dev/null << 'EOF'
+[Daemon]
+Theme=cyclestats
+ShowDelay=0
+DeviceTimeout=2
+EOF
+
+# Add display drivers to initramfs so Plymouth finds the screen
+sudo tee -a /etc/initramfs-tools/modules << 'EOF'
+vc4
+drm
+drm_kms_helper
+gpu_sched
+simpledrm
+EOF
+
+# Activate theme and rebuild initramfs
+sudo plymouth-set-default-theme --rebuild-initrd cyclestats
+```
+
+> **Pi 5 note:** On Pi 5, Plymouth renders correctly at shutdown (when the display pipeline is already active) but not at startup due to a DRM initialisation timing issue. The `feh` splash in `.xinitrc` covers the startup gap.
+
+### Disable slow boot services
+
+These services are not needed on a kiosk and add several seconds to boot time:
+
+```bash
+sudo systemctl disable NetworkManager-wait-online.service
+sudo systemctl disable avahi-daemon.service
+sudo systemctl disable bluetooth.service
+sudo systemctl mask wayvnc.service
+sudo touch /etc/cloud/cloud-init.disabled
+sudo systemctl mask cloud-init.service cloud-init-local.service \
+                   cloud-final.service cloud-config.service
+```
+
+After applying all changes:
+
+```bash
+sudo reboot
+```
+
+To verify boot time improvement:
+```bash
+systemd-analyze
+systemd-analyze blame | head -10
+```
 
 ---
 

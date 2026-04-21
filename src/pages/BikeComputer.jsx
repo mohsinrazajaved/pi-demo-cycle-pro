@@ -386,23 +386,25 @@ export default function BikeComputer() {
           )}
 
           {/* Top Section */}
-          <div className="flex flex-col overflow-hidden" style={{ height: '46%' }}>
-            {/* Timer row */}
+          <div className="flex flex-col overflow-hidden" style={{ height: '43%' }}>
+            {/* Timer row — label pinned to top, value fills below (consistent position regardless of value size) */}
             <div className="flex px-5 pt-5 gap-3" style={{ height: 'calc(13vh + 20px)' }}>
               {[
                 { label: 'Interval', value: formatTime(intervalSecondsRemaining) },
-                { label: 'Program', value: isInfinity ? '∞' : formatTimeRemaining(), large: isInfinity },
+                { label: 'Program', value: isInfinity ? '∞' : formatTimeRemaining() },
                 { label: 'Elapsed', value: formatTime(elapsedSeconds), dot: true },
-              ].map(({ label, value, large, dot }) => (
-                <div key={label} className="flex-1 rounded-xl border border-zinc-700/40 flex flex-col items-center justify-center"
+              ].map(({ label, value, dot }) => (
+                <div key={label} className="flex-1 rounded-xl border border-zinc-700/40 flex flex-col items-center pt-1.5 pb-1 overflow-hidden"
                   style={{ background: 'linear-gradient(180deg, rgba(30,30,30,0.9) 0%, rgba(15,15,15,0.9) 100%)' }}
                 >
-                  <span style={{ fontSize: '2vh' }} className="uppercase tracking-widest text-zinc-500 leading-none mb-0.5">{label}</span>
-                  <div className="font-mono font-bold text-[#FF3F03] leading-none flex items-center gap-1"
-                    style={{ fontSize: large ? '12vh' : '9.1vh', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}
-                  >
-                    {dot && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isRunning && !isPaused ? 'bg-[#FF3F03] animate-pulse' : isPaused ? 'bg-amber-400' : 'bg-zinc-600'}`} />}
-                    {value}
+                  <span style={{ fontSize: '1.8vh' }} className="uppercase tracking-widest text-zinc-500 leading-none flex-shrink-0">{label}</span>
+                  <div className="flex-1 flex items-center justify-center w-full min-h-0">
+                    <div className="font-mono font-bold text-[#FF3F03] leading-none flex items-center gap-1"
+                      style={{ fontSize: '7.5vh', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}
+                    >
+                      {dot && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isRunning && !isPaused ? 'bg-[#FF3F03] animate-pulse' : isPaused ? 'bg-amber-400' : 'bg-zinc-600'}`} />}
+                      {value}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -482,19 +484,19 @@ export default function BikeComputer() {
             />
           </div>
 
-          {/* Bottom Section */}
-          <div className="flex items-center px-3 pb-3 gap-2.5" style={{ height: '37%' }}>
-            <div className="w-[33%] h-full">
+          {/* Bottom Section — items-stretch so children fit content area (not total height) */}
+          <div className="flex items-stretch px-3 pb-3 gap-2.5" style={{ height: '40%' }}>
+            <div className="w-[33%] min-h-0">
               <SpeedometerGauge value={stats.cadence} max={150} label="RPM" unit="rpm" />
             </div>
-            <div className="flex-1 h-full flex flex-col items-center justify-center rounded-xl border border-zinc-700/40 relative overflow-hidden"
+            <div className="flex-1 flex flex-col items-center justify-center rounded-xl border border-zinc-700/40 relative overflow-hidden min-h-0"
               style={{ background: 'linear-gradient(180deg, rgba(20,20,20,0.9) 0%, rgba(10,10,10,0.9) 100%)' }}
             >
               <div className="absolute inset-0 opacity-10" style={{ background: 'radial-gradient(ellipse at 50% 100%, #FF3F03 0%, transparent 60%)' }} />
-              <div className="font-bold text-[#FF3F03] relative z-10" style={{ fontSize: '13vh', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}>{stats.distance.toFixed(2)}</div>
+              <div className="font-bold text-[#FF3F03] relative z-10" style={{ fontSize: '12vh', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}>{stats.distance.toFixed(2)}</div>
               <span style={{ fontSize: '1.8vh' }} className="uppercase tracking-widest text-zinc-500 relative z-10 mt-1">KM</span>
             </div>
-            <div className="w-[33%] h-full">
+            <div className="w-[33%] min-h-0">
               <SpeedometerGauge value={stats.power} max={300} label="WATTS" unit="watts" />
             </div>
           </div>

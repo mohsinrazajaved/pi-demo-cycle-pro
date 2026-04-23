@@ -7,7 +7,6 @@ import { playTypewriterClick } from '../components/bike/sounds';
 import { toast } from 'sonner';
 import SpeedometerGauge from '../components/bike/SpeedometerGauge';
 import ProgramDisplay, { primeAudio } from '../components/bike/ProgramDisplay';
-import SimulatorController from '../components/bike/SimulatorController';
 import BrightnessSlider from '../components/bike/BrightnessSlider';
 import VolumeSlider from '../components/bike/VolumeSlider';
 import ConfirmDialog from '../components/bike/ConfirmDialog';
@@ -370,15 +369,6 @@ export default function BikeComputer() {
       >
         {/* Top accent line */}
         <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.5), transparent)' }} />
-        <SimulatorController
-          heartRate={simHeartRate} setHeartRate={setSimHeartRate}
-          rpm={simRpm} setRpm={setSimRpm}
-          power={simPower} setPower={setSimPower}
-          resistance={resistance} setResistance={setResistance}
-          maxResistance={maxResistanceForProgram}
-          onHeartRateHold={handleHeartRateHold}
-          timeMultiplier={timeMultiplier} setTimeMultiplier={setTimeMultiplier}
-        />
 
         <div className="h-full w-full flex flex-col" onClick={isDimmed && !showBrightnessSlider ? () => setBrightness(100) : undefined}>
           {isDimmed && !showBrightnessSlider && (
@@ -386,9 +376,9 @@ export default function BikeComputer() {
           )}
 
           {/* Top Section */}
-          <div className="flex flex-col overflow-hidden" style={{ height: '43%' }}>
-            {/* Timer row — label pinned to top, value fills below (consistent position regardless of value size) */}
-            <div className="flex px-5 pt-5 gap-3" style={{ height: 'calc(13vh + 20px)' }}>
+          <div className="flex flex-col overflow-hidden min-h-0" style={{ flex: '43 43 0%' }}>
+            {/* Timer row — flex-shrink-0 so its content-driven height never crushes siblings */}
+            <div className="flex px-5 pt-5 gap-3 flex-shrink-0" style={{ height: 'clamp(80px, calc(13vh + 20px), 130px)' }}>
               {[
                 { label: 'Interval', value: formatTime(intervalSecondsRemaining) },
                 { label: 'Program', value: isInfinity ? '∞' : formatTimeRemaining() },
@@ -397,10 +387,10 @@ export default function BikeComputer() {
                 <div key={label} className="flex-1 rounded-xl border border-zinc-700/40 flex flex-col items-center pt-1.5 pb-1 overflow-hidden"
                   style={{ background: 'linear-gradient(180deg, rgba(30,30,30,0.9) 0%, rgba(15,15,15,0.9) 100%)' }}
                 >
-                  <span style={{ fontSize: '1.8vh' }} className="uppercase tracking-widest text-zinc-500 leading-none flex-shrink-0">{label}</span>
-                  <div className="flex-1 flex items-center justify-center w-full min-h-0">
-                    <div className="font-mono font-bold text-[#FF3F03] leading-none flex items-center gap-1"
-                      style={{ fontSize: '7.5vh', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}
+                  <span style={{ fontSize: 'clamp(9px, 1.8vh, 14px)' }} className="uppercase tracking-widest text-zinc-500 leading-none flex-shrink-0">{label}</span>
+                  <div className="flex-1 flex items-center justify-center w-full min-h-0 overflow-hidden">
+                    <div className="font-mono font-bold text-[#FF3F03] leading-none flex items-center gap-1 whitespace-nowrap"
+                      style={{ fontSize: 'clamp(20px, 7.5vh, 52px)', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}
                     >
                       {dot && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isRunning && !isPaused ? 'bg-[#FF3F03] animate-pulse' : isPaused ? 'bg-amber-400' : 'bg-zinc-600'}`} />}
                       {value}
@@ -417,33 +407,33 @@ export default function BikeComputer() {
                   style={{ background: 'linear-gradient(180deg, rgba(30,15,5,0.95) 0%, rgba(12,8,4,0.95) 100%)' }}
                 >
                   <div className="absolute inset-0 opacity-20" style={{ background: 'radial-gradient(ellipse at 50% 100%, #FF3F03 0%, transparent 70%)' }} />
-                  <div className="relative z-10 text-center">
+                  <div className="relative z-10 text-center w-full px-2">
                     <div className="flex items-center justify-center gap-1 mb-1">
-                      <Flame className="text-[#FF3F03] animate-pulse" style={{ width: '4vh', height: '4vh' }} />
-                      <span style={{ fontSize: '3vh' }} className="uppercase tracking-widest text-zinc-400">Calories</span>
+                      <Flame className="text-[#FF3F03] animate-pulse" style={{ width: 'clamp(14px, 4vh, 30px)', height: 'clamp(14px, 4vh, 30px)' }} />
+                      <span style={{ fontSize: 'clamp(12px, 3vh, 22px)' }} className="uppercase tracking-widest text-zinc-400">Calories</span>
                     </div>
-                    <div className="font-black leading-none text-[#FF3F03]" style={{ fontSize: '17vh', textShadow: '0 0 40px rgba(255,63,3,0.6)' }}>
+                    <div className="font-black leading-none text-[#FF3F03] whitespace-nowrap" style={{ fontSize: 'clamp(48px, 17vh, 120px)', textShadow: '0 0 40px rgba(255,63,3,0.6)' }}>
                       {Math.floor(stats.calories)}
                     </div>
-                    <span style={{ fontSize: '3vh' }} className="text-zinc-500 uppercase tracking-wider">kcal</span>
+                    <span style={{ fontSize: 'clamp(12px, 3vh, 22px)' }} className="text-zinc-500 uppercase tracking-wider">kcal</span>
                   </div>
                 </div>
               </div>
 
-              {/* Control buttons */}
-              <div className="w-1/2 p-2 flex flex-col min-h-0 justify-center">
-                <div className="grid grid-cols-2 gap-1.5" style={{ gridTemplateRows: 'repeat(3, 42px)' }}>
+              {/* Control buttons — grid fills the full panel height with a sensible min-row floor */}
+              <div className="w-1/2 p-2 flex flex-col min-h-0">
+                <div className="grid grid-cols-2 gap-1.5 flex-1 min-h-0" style={{ gridTemplateRows: 'repeat(3, minmax(32px, 1fr))' }}>
                   {!isRunning || isPaused ? (
                     <button onClick={() => { playTypewriterClick(); primeAudio(); setIsRunning(true); setIsPaused(false); }}
                       className="rounded-xl border border-zinc-700/40 hover:border-[#FF3F03]/40 font-bold flex items-center justify-center transition-all active:scale-95"
                       style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}>
-                      <Play style={{ width: '3.5vh', height: '3.5vh' }} className="text-[#FF3F03]" />
+                      <Play style={{ width: 'clamp(16px, 3.5vh, 28px)', height: 'clamp(16px, 3.5vh, 28px)' }} className="text-[#FF3F03]" />
                     </button>
                   ) : (
                     <button onClick={() => { playTypewriterClick(); setIsPaused(true); }}
                       className="rounded-xl border border-zinc-700/40 hover:border-[#FF3F03]/40 font-bold flex items-center justify-center transition-all active:scale-95"
                       style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}>
-                      <Pause style={{ width: '3.5vh', height: '3.5vh' }} className="text-[#FF3F03]" />
+                      <Pause style={{ width: 'clamp(16px, 3.5vh, 28px)', height: 'clamp(16px, 3.5vh, 28px)' }} className="text-[#FF3F03]" />
                     </button>
                   )}
                   {[
@@ -454,7 +444,7 @@ export default function BikeComputer() {
                     <button key={Icon.displayName} onClick={() => { playTypewriterClick(); action(); }}
                       className="rounded-xl border border-zinc-700/40 hover:border-[#FF3F03]/40 font-bold flex items-center justify-center transition-all active:scale-95"
                       style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}>
-                      <Icon style={{ width: '3.5vh', height: '3.5vh' }} className="text-[#FF3F03]" />
+                      <Icon style={{ width: 'clamp(16px, 3.5vh, 28px)', height: 'clamp(16px, 3.5vh, 28px)' }} className="text-[#FF3F03]" />
                     </button>
                   ))}
                   {[
@@ -464,7 +454,7 @@ export default function BikeComputer() {
                     <button key={label} onClick={() => { playTypewriterClick(); action(); }}
                       className="rounded-xl border border-zinc-700/40 hover:border-[#FF3F03]/40 font-bold flex items-center justify-center transition-all active:scale-95"
                       style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}>
-                      <span style={{ fontSize: '2.2vh' }} className="font-bold text-[#FF3F03] whitespace-nowrap tracking-wide">{label}</span>
+                      <span style={{ fontSize: 'clamp(11px, 2.2vh, 18px)' }} className="font-bold text-[#FF3F03] whitespace-nowrap tracking-wide">{label}</span>
                     </button>
                   ))}
                 </div>
@@ -473,7 +463,7 @@ export default function BikeComputer() {
           </div>
 
           {/* Middle Section: Program Display */}
-          <div className="px-3 pb-2" style={{ height: '17%' }}>
+          <div className="px-3 pb-2 min-h-0 overflow-hidden" style={{ flex: '17 17 0%' }}>
             <ProgramDisplay
               programData={programData}
               currentPosition={programPosition}
@@ -485,7 +475,7 @@ export default function BikeComputer() {
           </div>
 
           {/* Bottom Section — items-stretch so children fit content area (not total height) */}
-          <div className="flex items-stretch px-3 pb-3 gap-2.5" style={{ height: '40%' }}>
+          <div className="flex items-stretch px-3 pb-3 gap-2.5 min-h-0 overflow-hidden" style={{ flex: '40 40 0%' }}>
             <div className="w-[33%] min-h-0">
               <SpeedometerGauge value={stats.cadence} max={150} label="RPM" unit="rpm" />
             </div>
@@ -493,8 +483,8 @@ export default function BikeComputer() {
               style={{ background: 'linear-gradient(180deg, rgba(20,20,20,0.9) 0%, rgba(10,10,10,0.9) 100%)' }}
             >
               <div className="absolute inset-0 opacity-10" style={{ background: 'radial-gradient(ellipse at 50% 100%, #FF3F03 0%, transparent 60%)' }} />
-              <div className="font-bold text-[#FF3F03] relative z-10" style={{ fontSize: '12vh', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}>{stats.distance.toFixed(2)}</div>
-              <span style={{ fontSize: '1.8vh' }} className="uppercase tracking-widest text-zinc-500 relative z-10 mt-1">KM</span>
+              <div className="font-bold text-[#FF3F03] relative z-10 whitespace-nowrap" style={{ fontSize: 'clamp(36px, 12vh, 90px)', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}>{stats.distance.toFixed(2)}</div>
+              <span style={{ fontSize: 'clamp(9px, 1.8vh, 14px)' }} className="uppercase tracking-widest text-zinc-500 relative z-10 mt-1">KM</span>
             </div>
             <div className="w-[33%] min-h-0">
               <SpeedometerGauge value={stats.power} max={300} label="WATTS" unit="watts" />

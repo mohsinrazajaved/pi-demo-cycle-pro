@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-const LOGO_URL = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/698a9a4bff14678e47cf83bf/7b5d29d96_GamerCycleLogoTM.png';
+// Served from public/logo.png — works fully offline, no internet required.
+const LOGO_URL = '/logo.png';
 
 export default function SplashScreen({ onComplete }) {
   const [fading, setFading] = useState(false);

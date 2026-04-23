@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import ProgramDisplay from '../components/bike/ProgramDisplay';
-import SimulatorController from '../components/bike/SimulatorController';
 import { mockDB } from '@/api/mockDataService';
 import { generateProgramData } from '../components/bike/programPatterns';
 
@@ -208,26 +207,10 @@ export default function HeartRateCheck() {
         </div>
       )}
 
-      {/* Simulator Controller - always visible on top */}
-      <SimulatorController
-        heartRate={heartRate}
-        setHeartRate={setHeartRate}
-        rpm={simRpm}
-        setRpm={setSimRpm}
-        power={simPower}
-        setPower={setSimPower}
-        resistance={resistance}
-        setResistance={setResistance}
-        maxResistance={maxResistanceForProgram}
-        onHeartRateHold={handleBackToBike}
-        timeMultiplier={timeMultiplier}
-        setTimeMultiplier={setTimeMultiplier}
-      />
-
-      {/* Main Content — fixed heights tuned for 1024×600 */}
+      {/* Main Content — flex-based so sections adapt to any viewport */}
       <div className="flex-1 flex flex-col min-h-0 gap-3">
-        {/* Header with Time Displays — fixed 72px */}
-        <div className="flex gap-2.5" style={{ height: '72px', flexShrink: 0 }}>
+        {/* Header with Time Displays — flex-shrink-0, content-sized */}
+        <div className="flex gap-2.5 flex-shrink-0" style={{ height: 'clamp(60px, 12vh, 100px)' }}>
           {[
             { label: 'Interval', value: formatTime(intervalSecondsRemaining) },
             { label: 'Program',  value: formatTimeRemaining(), large: isInfinity },
@@ -287,8 +270,8 @@ export default function HeartRateCheck() {
           </div>
         </div>
 
-        {/* Bottom: Program Display — fixed 110px */}
-        <div style={{ height: '110px', flexShrink: 0 }}>
+        {/* Bottom: Program Display — flex-shrink-0, clamped to viewport */}
+        <div style={{ height: 'clamp(80px, 18vh, 140px)', flexShrink: 0 }}>
           <ProgramDisplay programData={programData} currentPosition={programPosition} resistance={resistance} isComplete={false} programLabel="" />
         </div>
       </div>

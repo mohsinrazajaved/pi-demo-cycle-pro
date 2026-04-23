@@ -117,7 +117,7 @@ export default function Home() {
       <div className="flex-1 flex flex-col p-4 gap-3 min-h-0">
 
         {/* Top bar */}
-        <div className="flex gap-2 flex-shrink-0" style={{ height: '60px' }}>
+        <div className="flex gap-2 flex-shrink-0" style={{ height: 'clamp(48px, 10vh, 72px)' }}>
           {/* Profile card */}
           <div className="flex-1 flex items-center gap-2.5 px-3 rounded-xl border border-zinc-700/50 bg-zinc-900/60 backdrop-blur-sm">
             <div className="w-10 h-10 rounded-full bg-[#FF3F03]/20 border border-[#FF3F03]/40 flex items-center justify-center flex-shrink-0">
@@ -180,7 +180,7 @@ export default function Home() {
         <button
           onClick={() => { playTypewriterClick(); setIsPoweredOff(true); }}
           className="flex-shrink-0 flex items-center justify-center gap-2 rounded-xl border border-red-900/40 bg-red-950/30 hover:bg-red-900/40 transition-all active:scale-[0.98]"
-          style={{ height: '44px' }}
+          style={{ height: 'clamp(36px, 7vh, 56px)' }}
         >
           <Power className="w-5 h-5 text-red-500" />
           <span className="text-base font-bold text-red-500 uppercase tracking-wider">Power Off</span>

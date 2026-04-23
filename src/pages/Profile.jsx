@@ -85,8 +85,8 @@ export default function Profile() {
     >
       <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.6), transparent)' }} />
 
-      {/* LEFT PANEL — form fields */}
-      <div className="flex flex-col gap-2.5 p-5 overflow-hidden relative z-10" style={{ width: '360px', flexShrink: 0 }}>
+      {/* LEFT PANEL — form fields — clamps so it stays usable at any width */}
+      <div className="flex flex-col gap-2.5 p-5 overflow-hidden relative z-10" style={{ width: 'clamp(280px, 35%, 400px)', flexShrink: 0 }}>
 
         {/* Header */}
         <div className="flex gap-2 flex-shrink-0">

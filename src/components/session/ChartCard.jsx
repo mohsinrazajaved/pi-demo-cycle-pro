@@ -30,7 +30,7 @@ export default function ChartCard({ data, dataKey, label, unit }) {
   );
 
   return (
-    <div className="bg-zinc-900/80 backdrop-blur-sm rounded-2xl p-5 border border-zinc-800">
+    <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800">
       <h3 className="text-sm font-medium text-zinc-400 mb-4 uppercase tracking-wider">{label}</h3>
       <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">

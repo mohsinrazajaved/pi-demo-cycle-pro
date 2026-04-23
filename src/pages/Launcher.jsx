@@ -114,24 +114,22 @@ export default function Launcher() {
         />
       )}
 
-      <div className="flex-1 flex flex-col p-4 gap-3 min-h-0">
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: '8px', gap: '4px' }}>
 
-        {/* Top bar */}
-        <div className="flex gap-2 flex-shrink-0" style={{ height: 'clamp(48px, 10vh, 72px)' }}>
-          {/* Profile card */}
-          <div className="flex-1 flex items-center gap-2.5 px-3 rounded-xl border border-zinc-700/50 bg-zinc-900/60 backdrop-blur-sm">
-            <div className="w-10 h-10 rounded-full bg-[#FF3F03]/20 border border-[#FF3F03]/40 flex items-center justify-center flex-shrink-0">
+        {/* Top bar — 48px */}
+        <div className="flex gap-2 flex-shrink-0" style={{ height: '48px' }}>
+          <div className="flex-1 flex items-center gap-2.5 px-3 rounded-xl border border-zinc-700/50 bg-zinc-900 min-w-0">
+            <div className="w-9 h-9 rounded-full bg-[#FF3F03]/20 border border-[#FF3F03]/40 flex items-center justify-center flex-shrink-0">
               <span className="text-sm font-bold text-[#FF3F03]">{initials}</span>
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="text-[10px] uppercase tracking-widest text-zinc-500 leading-none">Rider</div>
-              <div className="text-xl font-bold text-white truncate leading-tight">
+              <div className="text-lg font-bold text-white truncate leading-tight">
                 {activeProfile ? activeProfile.name : 'No Profile'}
               </div>
             </div>
           </div>
 
-          {/* Action buttons */}
           {[
             { icon: Volume2,  action: () => setShowVolumeSlider(true),  label: 'Volume' },
             { icon: History,  action: () => navigate(createPageUrl('SessionLog')), label: 'History' },
@@ -139,16 +137,17 @@ export default function Launcher() {
           ].map(({ icon: Icon, action, label }) => (
             <button key={label}
               onClick={() => { playTypewriterClick(); action(); }}
-              className="w-16 flex flex-col items-center justify-center gap-0.5 rounded-xl border border-zinc-700/50 bg-zinc-900/60 backdrop-blur-sm hover:bg-zinc-800/80 hover:border-[#FF3F03]/30 transition-all active:scale-95"
+              className="flex flex-col items-center justify-center gap-0.5 rounded-xl border border-zinc-700/50 bg-zinc-900 hover:bg-zinc-800/80 hover:border-[#FF3F03]/30 transition-all active:scale-95 flex-shrink-0"
+              style={{ width: '56px' }}
             >
-              <Icon className="w-6 h-6 text-[#FF3F03]" />
-              <span className="text-[10px] text-zinc-500 uppercase tracking-wider">{label}</span>
+              <Icon className="w-5 h-5 text-[#FF3F03]" />
+              <span className="text-[9px] text-zinc-500 uppercase tracking-wider">{label}</span>
             </button>
           ))}
         </div>
 
-        {/* Program grid */}
-        <div className="flex-1 grid grid-cols-4 gap-2 min-h-0" style={{ gridTemplateRows: '1fr 1fr' }}>
+        {/* Program grid — 234+8+234 = 476 */}
+        <div className="grid grid-cols-4 gap-2" style={{ gridTemplateRows: '234px 234px' }}>
           {programs.map((program) => (
             <button key={program.id}
               onClick={() => handleProgramSelect(program)}
@@ -159,31 +158,27 @@ export default function Launcher() {
                 boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
               }}
             >
-              {/* Hover glow */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
                 style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(255,63,3,0.12) 0%, transparent 70%)' }} />
-              {/* Top accent on hover */}
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FF3F03]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-              {/* Program name */}
               <span className="relative z-10 font-bold text-base text-white text-center leading-tight px-2 mb-2">{program.name}</span>
 
-              {/* Mini chart */}
-              <div className="absolute bottom-0 left-0 right-0 h-10 px-3 pb-2">
+              <div className="absolute bottom-0 left-0 right-0 px-3 pb-2" style={{ height: '40px' }}>
                 <MiniChart levels={PROGRAM_CHARTS[program.id] || [3,3,3,3,3,3,3,3,3,3]} />
               </div>
             </button>
           ))}
         </div>
 
-        {/* Power Off */}
+        {/* Power Off — 40px */}
         <button
           onClick={() => { playTypewriterClick(); setIsPoweredOff(true); }}
           className="flex-shrink-0 flex items-center justify-center gap-2 rounded-xl border border-red-900/40 bg-red-950/30 hover:bg-red-900/40 transition-all active:scale-[0.98]"
-          style={{ height: 'clamp(36px, 7vh, 56px)' }}
+          style={{ height: '40px' }}
         >
-          <Power className="w-5 h-5 text-red-500" />
-          <span className="text-base font-bold text-red-500 uppercase tracking-wider">Power Off</span>
+          <Power className="w-4 h-4 text-red-500" />
+          <span className="text-sm font-bold text-red-500 uppercase tracking-wider">Power Off</span>
         </button>
 
       </div>

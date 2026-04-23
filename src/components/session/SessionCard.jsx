@@ -13,7 +13,7 @@ export default function SessionCard({ workout }) {
   };
 
   return (
-    <div className="bg-zinc-900/80 backdrop-blur-sm rounded-2xl p-5 border border-zinc-800 hover:border-zinc-700 transition-all">
+    <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 hover:border-zinc-700 transition-all">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>

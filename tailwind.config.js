@@ -4,6 +4,10 @@ module.exports = {
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
   	extend: {
+  		fontFamily: {
+  			sans: ['"DejaVu Sans"', '"Liberation Sans"', '"Bitstream Vera Sans"', 'sans-serif'],
+  			mono: ['"DejaVu Sans Mono"', '"Liberation Mono"', '"Bitstream Vera Sans Mono"', 'monospace'],
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

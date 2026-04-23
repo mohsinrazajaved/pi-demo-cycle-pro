@@ -80,13 +80,14 @@ export default function RiderSetup() {
   const lbl = 'text-xs uppercase tracking-wider text-zinc-500 mb-0.5 block';
 
   return (
-    <div className="h-screen w-screen text-white overflow-hidden flex relative"
+    <div className="h-screen w-screen text-white overflow-hidden relative"
       style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, #1a0800 0%, #0d0d0d 60%, #080808 100%)' }}
     >
       <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.6), transparent)' }} />
 
-      {/* LEFT PANEL — form fields — clamps so it stays usable at any width */}
-      <div className="flex flex-col gap-2.5 p-5 overflow-hidden relative z-10" style={{ width: 'clamp(280px, 35%, 400px)', flexShrink: 0 }}>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
+      {/* LEFT PANEL — form fields — 360px fixed */}
+      <div className="flex flex-col gap-2.5 p-5 overflow-hidden relative z-10" style={{ width: '360px', flexShrink: 0 }}>
 
         {/* Header */}
         <div className="flex gap-2 flex-shrink-0">
@@ -193,6 +194,7 @@ export default function RiderSetup() {
         )}
       </div>
 
+      </div>
     </div>
   );
 }

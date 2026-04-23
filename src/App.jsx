@@ -5,6 +5,7 @@ import RouteLogger from '@/lib/RouteLogger'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import NotFoundView from './lib/NotFoundView';
+import FitToViewport from './lib/FitToViewport';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -18,6 +19,7 @@ const LayoutWrapper = ({ children, currentPageName }) =>
 function App() {
   return (
     <QueryClientProvider client={queryClientInstance}>
+      <FitToViewport>
       <Router>
         <RouteLogger />
         <Routes>
@@ -40,6 +42,7 @@ function App() {
           <Route path="*" element={<NotFoundView />} />
         </Routes>
       </Router>
+      </FitToViewport>
       <Toaster />
     </QueryClientProvider>
   )

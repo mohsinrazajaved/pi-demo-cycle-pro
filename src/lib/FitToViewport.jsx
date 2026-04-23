@@ -1,0 +1,54 @@
+import { useEffect, useState } from 'react';
+
+const DESIGN_W = 1024;
+const DESIGN_H = 600;
+
+/**
+ * Locks the app to a 1024×600 design canvas and scales it to fit whatever
+ * viewport the kiosk browser reports. Solves Pi overscan / bezel crop — the
+ * layout can never overflow regardless of the real display dimensions.
+ *
+ * Because `transform: scale()` establishes a containing block, any `fixed`
+ * modals inside still stay within the design canvas.
+ */
+export default function FitToViewport({ children }) {
+  const [dims, setDims] = useState({ w: window.innerWidth, h: window.innerHeight });
+
+  useEffect(() => {
+    const compute = () => setDims({ w: window.innerWidth, h: window.innerHeight });
+    compute();
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
+  }, []);
+
+  const scale = Math.min(dims.w / DESIGN_W, dims.h / DESIGN_H);
+  const scaledW = DESIGN_W * scale;
+  const scaledH = DESIGN_H * scale;
+  const offsetX = (dims.w - scaledW) / 2;
+  const offsetY = (dims.h - scaledH) / 2;
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: '#000',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          left: offsetX,
+          top: offsetY,
+          width: DESIGN_W,
+          height: DESIGN_H,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}

@@ -92,14 +92,14 @@ export default function SessionLog() {
   };
 
   return (
-    <div className="h-screen w-screen text-white overflow-hidden flex flex-col"
+    <div className="h-screen w-screen text-white overflow-hidden relative"
       style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, #1a0800 0%, #0d0d0d 60%, #080808 100%)' }}
     >
-      {/* Top accent */}
       <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.6), transparent)' }} />
 
-      {/* Header */}
-      <div className="flex-shrink-0 flex items-center gap-2 px-5 py-3 border-b border-zinc-800/50">
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
+      {/* Header — 56px */}
+      <div className="flex items-center gap-2 border-b border-zinc-800/50 flex-shrink-0" style={{ height: '56px', padding: '0 20px' }}>
         <Link
           to={createPageUrl('Launcher')}
           onClick={() => playTypewriterClick()}
@@ -133,9 +133,9 @@ export default function SessionLog() {
         </div>
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        <div className="max-w-2xl mx-auto">
+      {/* Scrollable content — 544px */}
+      <div className="overflow-y-auto px-4 py-3" style={{ height: '544px' }}>
+        <div className="max-w-4xl mx-auto">
 
         {isLoading ? (
           <div className="space-y-4">
@@ -268,6 +268,7 @@ export default function SessionLog() {
           </>
         )}
         </div>
+      </div>
       </div>
     </div>
   );

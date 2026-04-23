@@ -53,8 +53,8 @@ export default function AlphaPad({ value, onChange, onClose, onPrev, onNext }) {
             <button
               key={k}
               onMouseDown={(e) => { e.preventDefault(); handleKey(k); }}
-              className={`${btnClass} flex-1 h-8 text-sm`} style={{ background: 'linear-gradient(145deg, #252525, #1a1a1a)' }}
-              style={{ maxWidth: '10%' }}
+              className={`${btnClass} flex-1 h-8 text-sm`}
+              style={{ background: 'linear-gradient(145deg, #252525, #1a1a1a)', maxWidth: '10%' }}
             >
               {caps ? k.toUpperCase() : k.toLowerCase()}
             </button>

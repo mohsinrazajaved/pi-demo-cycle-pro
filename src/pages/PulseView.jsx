@@ -192,25 +192,25 @@ export default function PulseView() {
   };
 
   return (
-    <div className="h-screen w-screen text-white overflow-hidden flex flex-col p-5 relative"
+    <div className="h-screen w-screen text-white overflow-hidden relative"
       style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, #1a0800 0%, #0a0a0a 60%, #050505 100%)' }}
     >
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.5), transparent)' }} />
 
-      {/* Auto-return countdown badge */}
+      {/* Auto-return countdown badge — centered at top so it doesn't overlap timer cards */}
       {autoReturn > 0 && (
-        <div className="absolute top-3 right-3 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#FF3F03]/40 text-xs font-bold text-[#FF3F03]"
-          style={{ background: 'rgba(255,63,3,0.1)' }}
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-[#FF3F03]/40 text-[10px] font-bold text-[#FF3F03]"
+          style={{ background: 'rgba(255,63,3,0.12)' }}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#FF3F03] animate-pulse" />
           Returning in {autoReturnCountdown}s
         </div>
       )}
 
-      {/* Main Content — flex-based so sections adapt to any viewport */}
-      <div className="flex-1 flex flex-col min-h-0 gap-3">
-        {/* Header with Time Displays — flex-shrink-0, content-sized */}
-        <div className="flex gap-2.5 flex-shrink-0" style={{ height: 'clamp(60px, 12vh, 100px)' }}>
+      {/* Main Content — fixed-pixel layout: 72 + 388 + 108 + paddings/gaps = 600 */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: '8px', gap: '8px' }}>
+        {/* Header — 72px */}
+        <div className="flex gap-2 flex-shrink-0" style={{ height: '72px' }}>
           {[
             { label: 'Interval', value: formatTime(intervalSecondsRemaining) },
             { label: 'Program',  value: formatTimeRemaining(), large: isInfinity },
@@ -219,9 +219,9 @@ export default function PulseView() {
             <div key={label} className="flex-1 rounded-xl border border-zinc-700/40 px-2 flex flex-col items-center justify-center"
               style={{ background: 'linear-gradient(180deg, rgba(30,30,30,0.9) 0%, rgba(15,15,15,0.9) 100%)' }}
             >
-              <span className="text-[10px] uppercase tracking-widest text-zinc-500 leading-none mb-0.5">{label}</span>
-              <div className={`font-mono font-bold text-[#FF3F03] leading-none flex items-center gap-1 ${large ? 'text-5xl' : 'text-3xl'}`}
-                style={{ textShadow: '0 0 20px rgba(255,63,3,0.4)' }}
+              <span className="text-[10px] uppercase tracking-widest text-zinc-500 leading-none mb-1">{label}</span>
+              <div className="font-mono font-bold text-[#FF3F03] leading-none flex items-center gap-1 whitespace-nowrap"
+                style={{ fontSize: large ? '32px' : '26px', textShadow: '0 0 20px rgba(255,63,3,0.4)' }}
               >
                 {dot && <span className={`w-1.5 h-1.5 rounded-full ${wasRunning ? 'bg-[#FF3F03] animate-pulse' : 'bg-zinc-600'}`} />}
                 {value}
@@ -230,19 +230,17 @@ export default function PulseView() {
           ))}
         </div>
 
-        {/* Centre: Gauge + Info — flex-1 takes remaining space */}
-        <div className="flex gap-2.5 min-h-0" style={{ flex: '1 1 0' }}>
-          {/* Heart Rate Gauge - 2/3 width */}
-          <div className="w-2/3 rounded-xl border border-zinc-700/40 p-3 min-h-0"
+        {/* Centre — 388px */}
+        <div className="flex gap-2 flex-shrink-0" style={{ height: '388px' }}>
+          <div className="w-2/3 rounded-xl border border-zinc-700/40 p-2"
             style={{ background: 'linear-gradient(180deg, rgba(25,25,25,0.95) 0%, rgba(12,12,12,0.95) 100%)' }}
           >
             <HeartRateGauge heartRate={heartRate} />
           </div>
-          {/* Right side - two stacked panels - 1/3 width */}
-          <div className="w-1/3 flex flex-col gap-2.5 min-h-0">
+          <div className="w-1/3 flex flex-col gap-2">
             {/* Training Zone */}
             <div className="flex-1 rounded-xl border border-zinc-700/40 p-2 flex flex-col items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(180deg, rgba(25,25,25,0.95) 0%, rgba(12,12,12,0.95) 100%)' }}>
-              <span className="text-[9px] uppercase tracking-wider text-zinc-500 mb-1">Training Zone</span>
+              <span className="text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Training Zone</span>
               {(() => {
                 const maxHR = 220 - profileAge;
                 const pct = (heartRate / maxHR) * 100;
@@ -254,24 +252,24 @@ export default function PulseView() {
                 else { zone = 'Anaerobic'; }
                 const color = getHeartRateColor(heartRate);
                 return (
-                  <div className="text-center px-1">
-                    <div className="text-3xl font-black uppercase leading-tight" style={{ color }}>{zone}</div>
+                  <div className="text-center px-1 w-full">
+                    <div className="font-black uppercase leading-tight break-words" style={{ color, fontSize: '28px' }}>{zone}</div>
                   </div>
                 );
               })()}
             </div>
             {/* % Max Heart Rate */}
             <div className="flex-1 rounded-xl border border-zinc-700/40 p-2 flex flex-col items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(180deg, rgba(25,25,25,0.95) 0%, rgba(12,12,12,0.95) 100%)' }}>
-              <span className="text-[9px] uppercase tracking-wider text-zinc-500 mb-1">% Max Heart Rate</span>
-              <div className="text-4xl font-black" style={{ color: getHeartRateColor(heartRate) }}>
+              <span className="text-[10px] uppercase tracking-wider text-zinc-500 mb-2">% Max Heart Rate</span>
+              <div className="font-black" style={{ color: getHeartRateColor(heartRate), fontSize: '40px' }}>
                 {Math.round((heartRate / (220 - profileAge)) * 100)}%
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bottom: Program Display — flex-shrink-0, clamped to viewport */}
-        <div style={{ height: 'clamp(80px, 18vh, 140px)', flexShrink: 0 }}>
+        {/* Bottom — 108px */}
+        <div style={{ height: '108px', flexShrink: 0 }}>
           <SessionTimeline programData={programData} currentPosition={programPosition} resistance={resistance} isComplete={false} programLabel="" />
         </div>
       </div>

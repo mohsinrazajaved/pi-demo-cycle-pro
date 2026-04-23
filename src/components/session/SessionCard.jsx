@@ -2,7 +2,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { Flame, Clock, Route, Gauge, Heart, Zap, Activity } from 'lucide-react';
 
-export default function WorkoutCard({ workout }) {
+export default function SessionCard({ workout }) {
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const hrs = Math.floor(mins / 60);

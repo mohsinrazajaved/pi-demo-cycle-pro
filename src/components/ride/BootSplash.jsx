@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 // Served from public/logo.png — works fully offline, no internet required.
 const LOGO_URL = '/logo.png';
 
-export default function SplashScreen({ onComplete }) {
+export default function BootSplash({ onComplete }) {
   const [fading, setFading] = useState(false);
 
   useEffect(() => {

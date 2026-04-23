@@ -1,9 +1,9 @@
 import React from 'react';
 import { Slider } from "@/components/ui/slider";
 import { Sun, X } from 'lucide-react';
-import { playTypewriterClick } from './sounds';
+import { playTypewriterClick } from './audioCues';
 
-export default function BrightnessSlider({ brightness, setBrightness, onClose }) {
+export default function ScreenDimmer({ brightness, setBrightness, onClose }) {
   return (
     <>
       {/* Background overlay that dims with the brightness setting */}

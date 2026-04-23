@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import ProgramDisplay from '../components/bike/ProgramDisplay';
-import { mockDB } from '@/api/mockDataService';
-import { generateProgramData } from '../components/bike/programPatterns';
+import SessionTimeline from '../components/ride/SessionTimeline';
+import { dataStore } from '@/services/localStore';
+import { generateSessionPattern } from '../components/ride/sessionPatterns';
 
 function HeartRateGauge({ heartRate }) {
   const MIN = 60;
@@ -54,11 +54,11 @@ function HeartRateGauge({ heartRate }) {
   );
 }
 
-export default function HeartRateCheck() {
+export default function PulseView() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
 
-  // State passed from BikeComputer
+  // State passed from RideDisplay
   const program = urlParams.get('program') || '';
   const targetEndTimeParam = urlParams.get('targetEndTime') || '';
   const isManual = urlParams.get('manual') === '1';
@@ -80,12 +80,12 @@ export default function HeartRateCheck() {
 
   // Load profile age (fallback to 44 for demo math: 120 BPM = 68% of max HR)
   useEffect(() => {
-    mockDB.entities.Profile.list('-created_date', 1).then((results) => {
+    dataStore.entities.Profile.list('-created_date', 1).then((results) => {
       if (results.length > 0 && results[0].age) setProfileAge(results[0].age);
     });
   }, []);
 
-  // Auto-return to BikeComputer after N seconds (triggered by push button)
+  // Auto-return to RideDisplay after N seconds (triggered by push button)
   const [autoReturnCountdown, setAutoReturnCountdown] = useState(autoReturn);
   useEffect(() => {
     if (!autoReturn) return;
@@ -117,21 +117,21 @@ export default function HeartRateCheck() {
     return () => clearInterval(interval);
   }, [wasRunning, timeMultiplier]);
 
-  const NUM_BARS = generateProgramData(program, resistance).length;
+  const NUM_BARS = generateSessionPattern(program, resistance).length;
 
   // For small-step, cap resistance at 27 (max offset is 3, so 27+3=30)
   // In manual mode, no cap needed
   const maxResistanceForProgram = (!isManual && program === 'small-step') ? 27 : 30;
 
   const [programData, setProgramData] = useState(() =>
-    isManual ? Array(NUM_BARS).fill(resistance) : generateProgramData(program, resistance)
+    isManual ? Array(NUM_BARS).fill(resistance) : generateSessionPattern(program, resistance)
   );
 
   useEffect(() => {
     if (isManual) {
       setProgramData(Array(NUM_BARS).fill(resistance));
     } else {
-      setProgramData(generateProgramData(program, resistance));
+      setProgramData(generateSessionPattern(program, resistance));
     }
   }, [resistance, isManual]);
 
@@ -182,11 +182,11 @@ export default function HeartRateCheck() {
   };
 
   const handleBackToBike = () => {
-    // Pass the absolute target end time back to BikeComputer
+    // Pass the absolute target end time back to RideDisplay
     const passableTargetEndTime = isInfinity ? 'infinity' : targetDuration;
 
     navigate(
-      createPageUrl('BikeComputer') +
+      createPageUrl('RideDisplay') +
       `?program=${program}&targetEndTime=${passableTargetEndTime}&elapsed=${elapsedSeconds}&intervalRemaining=${intervalSecondsRemaining}&programPosition=${programPosition}&running=${wasRunning ? '1' : '0'}&resistance=${resistance}&manual=${isManual ? '1' : '0'}&infinity=${isInfinity ? '1' : '0'}`
     );
   };
@@ -272,7 +272,7 @@ export default function HeartRateCheck() {
 
         {/* Bottom: Program Display — flex-shrink-0, clamped to viewport */}
         <div style={{ height: 'clamp(80px, 18vh, 140px)', flexShrink: 0 }}>
-          <ProgramDisplay programData={programData} currentPosition={programPosition} resistance={resistance} isComplete={false} programLabel="" />
+          <SessionTimeline programData={programData} currentPosition={programPosition} resistance={resistance} isComplete={false} programLabel="" />
         </div>
       </div>
     </div>

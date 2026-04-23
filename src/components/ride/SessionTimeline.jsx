@@ -109,7 +109,7 @@ function playRetroCheer(volumePct = 100) {
   }
 }
 
-export default function ProgramDisplay({ programData, currentPosition, resistance, isComplete, programLabel, volume = 100 }) {
+export default function SessionTimeline({ programData, currentPosition, resistance, isComplete, programLabel, volume = 100 }) {
   const totalBars = programData.length;
   const [eqHeights, setEqHeights] = useState(null);
   const [showGameOver, setShowGameOver] = useState(false);

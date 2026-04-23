@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, Timer } from 'lucide-react';
-import { playTypewriterClick } from '../components/bike/sounds';
+import { playTypewriterClick } from '../components/ride/audioCues';
 
 const TIME_OPTIONS = [
   { label: '10',  value: 10 },
@@ -24,7 +24,7 @@ const TIME_OPTIONS = [
 
 const TIMED_PROGRAMS = ['small-interval', 'large-interval', 'small-step', 'big-step', 'small-plateau', 'large-plateau'];
 
-export default function Time() {
+export default function DurationSelect() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const programId = urlParams.get('program');
@@ -38,7 +38,7 @@ export default function Time() {
       resolvedProgramId = `${programId}-${value}`;
     }
     const durationLabel = value === Infinity ? '∞' : `${value}min`;
-    navigate(createPageUrl('BikeComputer') + `?program=${resolvedProgramId}&duration=${value === Infinity ? 'infinity' : value}&name=${encodeURIComponent(programName)}&durationLabel=${encodeURIComponent(durationLabel)}`);
+    navigate(createPageUrl('RideDisplay') + `?program=${resolvedProgramId}&duration=${value === Infinity ? 'infinity' : value}&name=${encodeURIComponent(programName)}&durationLabel=${encodeURIComponent(durationLabel)}`);
   };
 
   return (
@@ -51,7 +51,7 @@ export default function Time() {
       {/* Header */}
       <div className="flex-shrink-0 px-5 pt-4 pb-3 flex items-center gap-3">
         <button
-          onClick={() => { playTypewriterClick(); navigate(createPageUrl('Home')); }}
+          onClick={() => { playTypewriterClick(); navigate(createPageUrl('Launcher')); }}
           className="w-10 h-10 rounded-xl border border-zinc-700/50 flex items-center justify-center transition-all hover:border-[#FF3F03]/40 active:scale-95"
           style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}
         >

@@ -1,7 +1,7 @@
 /**
- * mockDataService.js
- * Offline-first localStorage CRUD.
- * Stores Profiles and Workouts locally, no network required.
+ * localStore.js
+ * Offline-first localStorage CRUD for rider profiles and session records.
+ * No backend, no network, no auth — everything lives on-device.
  */
 
 const KEYS = {
@@ -129,7 +129,7 @@ function makeEntity(key, dateField = 'created_date') {
 
 // ─── Exported mock service ───────────────────────────────────────────────────
 
-export const mockDB = {
+export const dataStore = {
     entities: {
         Profile: makeEntity(KEYS.profiles, 'created_date'),
         Workout: makeEntity(KEYS.workouts, 'workout_date'),

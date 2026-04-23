@@ -1,8 +1,8 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { playTypewriterClick } from './sounds';
+import { playTypewriterClick } from './audioCues';
 
-export default function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel }) {
+export default function PromptDialog({ isOpen, title, message, onConfirm, onCancel }) {
   if (!isOpen) return null;
   
   return (

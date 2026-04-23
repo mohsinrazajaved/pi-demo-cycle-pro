@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cycle Stats Pro — Hardware Bridge
+SpinDeck — Hardware Bridge
 Raspberry Pi 5 GPIO → WebSocket server
 
 Inputs:
@@ -104,7 +104,7 @@ async def handler(websocket):
         print(f"[-] Client disconnected ({len(connected_clients)} total)")
 
 async def main():
-    print("Cycle Stats Pro hardware bridge starting...")
+    print("SpinDeck hardware bridge starting...")
     print(f"  Encoder CLK={ENCODER_CLK}, DT={ENCODER_DT}")
     print(f"  Button PIN={BUTTON_PIN}, LED={BUTTON_LED}")
     print("  WebSocket server on ws://localhost:8765")

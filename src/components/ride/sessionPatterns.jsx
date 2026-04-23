@@ -167,7 +167,7 @@ export const PATTERN_BASE = {
   'large-plateau-110': 2, 'large-plateau-120': 2, 'large-plateau-130': 2, 'large-plateau-140': 2,
 };
 
-export function generateProgramData(programId, baseResistance = 5) {
+export function generateSessionPattern(programId, baseResistance = 5) {
   if (PROGRAM_PATTERNS[programId]) {
     const patternBase = PATTERN_BASE[programId] ?? 1;
     const offset = Math.max(0, baseResistance - patternBase);

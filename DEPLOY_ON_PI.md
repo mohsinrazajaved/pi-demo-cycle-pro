@@ -1,532 +1,338 @@
-# Cycle Stats Pro — Raspberry Pi Deployment Guide
+# SpinDeck — Raspberry Pi Deployment Guide
 
-This guide is for running **Cycle Stats Pro** on a Raspberry Pi 5 with a Waveshare 7" HDMI (H) 1024×600 touchscreen and testing the hardware inputs (rotary encoder + push button).
+This guide walks through running **SpinDeck** on a Raspberry Pi 5 with a Waveshare 7" HDMI (H) 1024×600 touchscreen, and wiring up the two hardware inputs (rotary encoder + push button).
 
-The app is a React/Vite static web app with a small Python "hardware bridge" script that reads GPIO pins and sends events to the browser via a local WebSocket. There is no backend, no database, no internet required — everything runs locally on the Pi.
+SpinDeck is a React/Vite static web app paired with a tiny Python GPIO bridge. No backend, no database, no internet required at runtime — everything runs locally.
 
 ---
 
-## 1. What You're Getting
+## 1. Source Code
 
-The project lives on GitHub here:
+The project lives on GitHub:
 
 ### 🔗 Repository
 **https://github.com/mohsinrazajaved/pi-demo-cycle-pro**
 
-Clone it anywhere (your Mac, PC, or directly on the Pi):
+Clone anywhere (Mac, PC, or directly on the Pi):
 ```bash
-git clone https://github.com/mohsinrazajaved/pi-demo-cycle-pro.git cycle-stats-pro
-cd cycle-stats-pro
+git clone https://github.com/mohsinrazajaved/pi-demo-cycle-pro.git spindeck
+cd spindeck
 ```
 
-Folder structure:
+Folder layout:
 ```
-cycle-stats-pro/
-├── encoder.py            ← Python GPIO bridge script (real hardware)
-├── mock-hardware.py      ← optional: simulate events from a Mac/PC (no Pi)
-├── DEPLOY_ON_PI.md       ← this file
-├── src/                  ← React source code — build with `npm run build`
+spindeck/
+├── hardwareBridge.py     Python GPIO → WebSocket bridge (runs on Pi)
+├── mockBridge.py         Mac/PC mock bridge for testing without hardware
+├── DEPLOY_ON_PI.md       (this file)
+├── src/                  React source — build with `npm run build`
+├── public/logo.png       splash logo (bundled with the app, no CDN)
 ├── index.html
 ├── package.json
 └── ...
 ```
 
-> **Note:** The `dist/` folder (built static files) is **not in the repo** — you need to build it once with `npm run build` before serving. This only needs Node.js during the build step, not at runtime.
+> The `dist/` folder (built static files) is **not in the repo** — build it once with `npm run build` before serving.
 
 ---
 
-## 2. Hardware You Need
+## 2. Hardware Bill of Materials
 
 | Item | Notes |
 |---|---|
-| Raspberry Pi 5 | 4GB+ recommended |
+| Raspberry Pi 5 | 4 GB+ recommended |
 | Waveshare 7" HDMI LCD (H) — 1024×600 | https://www.waveshare.com/wiki/7inch_HDMI_LCD_(H)_(with_case) |
-| Rotary encoder (KY-040 or similar) | 3-pin: CLK, DT, GND (+3.3V if VCC present) |
-| Push button (momentary) | Any SPST button |
-| LED (5mm) | Optional — lights up and flashes on button press |
-| 220Ω resistor | In series with the LED |
-| Jumper wires | 6–8 of them |
-| microSD card 16GB+ | For Raspberry Pi OS |
-| HDMI cable | To connect Pi → screen |
-| USB-C power supply for Pi | 5V/5A for Pi 5 |
+| Rotary encoder (KY-040 or equivalent) | 3-pin: CLK, DT, GND (+3.3V if VCC present) |
+| Momentary push button | Any SPST |
+| 5 mm LED (optional) | Flashes on button press |
+| 220 Ω resistor | In series with the LED |
+| ~8 jumper wires | |
+| microSD 16 GB+ | Raspberry Pi OS |
+| HDMI cable | Pi → panel |
+| USB-C 5V/5A supply | For Pi 5 |
 
 ---
 
-## 3. Wiring
+## 3. Wiring (BCM pin numbers)
 
-Use **BCM pin numbering** (the "GPIO XX" numbers, not physical pin numbers).
+### Rotary encoder (KY-040)
 
-### Rotary Encoder (KY-040)
-
-| Encoder pin | Pi pin (BCM) | Physical pin |
+| Encoder pin | Pi BCM | Physical pin |
 |---|---|---|
 | CLK | GPIO 17 | Pin 11 |
 | DT  | GPIO 18 | Pin 12 |
-| GND | GND     | Pin 9 or any GND |
-| `+` / VCC (if present) | 3.3V | Pin 1 or 17 |
+| GND | GND | Pin 9 (or any GND) |
+| `+` / VCC (if present) | 3.3V | Pin 1 |
 
-The encoder has no SW (push) pin wired — the push-button is separate.
+### Push button
 
-### Push Button
-
-| Button terminal | Pi pin (BCM) | Physical pin |
+| Button leg | Pi BCM | Physical pin |
 |---|---|---|
 | One leg | GPIO 23 | Pin 16 |
-| Other leg | GND | Any GND |
+| Other leg | GND | any GND |
 
-(The script uses Pi's internal pull-up resistor, so no external pull-up is needed. The button shorts GPIO 23 → GND when pressed.)
+Uses the Pi's internal pull-up — no external resistor needed. Button shorts GPIO 23 → GND when pressed.
 
-### LED (optional, for press feedback)
+### LED (optional)
 
-| LED leg | Connection |
+| LED | Connection |
 |---|---|
-| Long leg (anode, +) | → 220Ω resistor → GPIO 24 (Pi physical pin 18) |
-| Short leg (cathode, –) | GND |
-
-If you don't have an LED handy, skip it — the script still works.
+| Anode (long leg, +) | → 220 Ω resistor → GPIO 24 (Pin 18) |
+| Cathode (short leg, –) | GND |
 
 ---
 
-## 4. Raspberry Pi OS Setup
+## 4. Raspberry Pi OS setup
 
-### Install Raspberry Pi OS
+### Flash the OS
 
-1. Use Raspberry Pi Imager → **Raspberry Pi OS (64-bit) with Desktop** → write to SD.
-2. Pre-configure user (e.g., `pi`), WiFi, SSH enabled.
-3. Insert SD, connect HDMI + touchscreen + power. Boot.
+Use Raspberry Pi Imager → **Raspberry Pi OS (64-bit) with Desktop** → write to SD. Pre-configure user, Wi-Fi, SSH. Insert SD, connect HDMI + panel + power.
 
-### Enable the Waveshare 7" screen
+### Waveshare 1024×600 display config
 
-Most Waveshare HDMI screens are plug-and-play on a Pi, but the 1024×600 variant sometimes needs a config. Edit `/boot/firmware/config.txt`:
-
+Some Waveshare panels need an explicit mode. Edit the boot config:
 ```bash
 sudo nano /boot/firmware/config.txt
 ```
-
-Ensure these are present (add at the end if missing):
-
+Add at the end if missing:
 ```
 hdmi_group=2
 hdmi_mode=87
 hdmi_cvt=1024 600 60 6 0 0 0
 hdmi_drive=1
 ```
-
-Save and reboot: `sudo reboot`.
+Reboot: `sudo reboot`.
 
 ---
 
-## 5. Install Dependencies on the Pi
-
-Once logged into the Pi (either on the touchscreen or via `ssh pi@<pi-ip>`):
+## 5. Install dependencies on the Pi
 
 ```bash
-# Node.js — only needed for `serve`, the static file server
+# Node.js (used by `serve` for the static build)
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 sudo npm install -g serve
 
-# Python 3 + hardware libs (Python 3 is usually pre-installed)
+# Python GPIO libs (RPi.GPIO comes pre-installed; websockets via apt on Bookworm)
 sudo apt-get install -y python3-websockets
-# Note: on Pi OS Bookworm, install websockets via apt (not pip) to avoid
-# the externally-managed-environment error. RPi.GPIO is pre-installed.
 
-# Optional: hides the mouse cursor in kiosk mode
+# Cursor hider for kiosk
 sudo apt-get install -y unclutter
 ```
 
 ---
 
-## 6. Get the App onto the Pi
+## 6. Get the app onto the Pi
 
-### Recommended: Clone from GitHub + build on the Pi
+### Recommended — clone + build on the Pi
 
-This is the simplest end-to-end path and keeps you in sync with the latest code.
-
-SSH into the Pi (or work directly on the touchscreen) and run:
+SSH in (or work on the touchscreen directly):
 
 ```bash
-# Clone the repo
 cd ~
-git clone https://github.com/mohsinrazajaved/pi-demo-cycle-pro.git cycle-stats-pro-src
-cd cycle-stats-pro-src
+git clone https://github.com/mohsinrazajaved/pi-demo-cycle-pro.git spindeck-src
+cd spindeck-src
+npm install                # ~2–3 min
+npm run build              # ~20 s
 
-# Install Node deps (one-time, ~2-3 min)
-npm install
-
-# Build the static web app (~20 sec)
-npm run build
-
-# Move the built files + encoder.py into a clean serving directory
-mkdir -p ~/cycle-stats-pro
-cp -r dist/* ~/cycle-stats-pro/
-cp encoder.py ~/cycle-stats-pro/
+mkdir -p ~/spindeck
+cp -r dist/* ~/spindeck/
+cp hardwareBridge.py ~/spindeck/
 ```
 
-**End state:** The Pi will have this directory ready to serve:
+End state:
 ```
-/home/pi/cycle-stats-pro/
+/home/pi/spindeck/
 ├── index.html
+├── logo.png
 ├── assets/
 │   ├── index-XXXXX.js
 │   └── index-XXXXX.css
-└── encoder.py
+└── hardwareBridge.py
 ```
 
-You can delete the `cycle-stats-pro-src` folder after building if you want to save space — but keep it if you plan to pull updates with `git pull` later.
+### Alternative — build on Mac, copy via SCP
 
----
-
-### Alternative paths (if the Pi has no internet)
-
-**Build on your Mac, then SCP:**
 ```bash
 # On the Mac
 git clone https://github.com/mohsinrazajaved/pi-demo-cycle-pro.git
 cd pi-demo-cycle-pro
-npm install
-npm run build
+npm install && npm run build
 
-# Copy to Pi
-scp -r dist/ pi@<PI_IP>:~/cycle-stats-pro
-scp encoder.py pi@<PI_IP>:~/cycle-stats-pro/
-```
-
-**USB drive:**
-Build on a machine with internet, copy `dist/` + `encoder.py` onto a USB, plug into Pi, then:
-```bash
-mkdir -p ~/cycle-stats-pro
-cp -r /media/pi/<USB_NAME>/dist/* ~/cycle-stats-pro/
-cp /media/pi/<USB_NAME>/encoder.py ~/cycle-stats-pro/
+scp -r dist/ pi@<PI_IP>:~/spindeck
+scp hardwareBridge.py pi@<PI_IP>:~/spindeck/
 ```
 
 ---
 
-## 7. First Manual Test (before autostart)
+## 7. Manual sanity test
 
-Run everything manually once to confirm it works.
+Two terminals:
 
-### Terminal 1 — static web server
+**Terminal A — static server**
 ```bash
-cd ~/cycle-stats-pro
+cd ~/spindeck
 serve -s . -l 5173
 ```
-You should see: `Accepting connections at http://localhost:5173`
 
-### Terminal 2 — hardware bridge
+**Terminal B — hardware bridge**
 ```bash
-cd ~/cycle-stats-pro
-python3 encoder.py
+cd ~/spindeck
+python3 hardwareBridge.py
 ```
 You should see:
 ```
-Cycle Stats Pro hardware bridge starting...
+SpinDeck hardware bridge starting...
   Encoder CLK=17, DT=18
   Button PIN=23, LED=24
   WebSocket server on ws://localhost:8765
 ```
 
-### Browser
-Open Chromium on the Pi and go to `http://localhost:5173`.
+**Browser** (Chromium on the Pi): open `http://localhost:5173` — splash appears with the SpinDeck logo, fades into the Launcher.
 
-You should see the Home screen. Pick a program (e.g., "GC Fat Burn") → duration (e.g., 120 min) → you land on the BikeComputer workout screen.
-
-### Test the hardware
-
-- **Turn the encoder clockwise** → resistance goes up by 1 each click. Visible in the program bar display (the orange highlighted bar moves up).
-- **Turn the encoder counter-clockwise** → resistance goes down by 1.
-- **Press the button** → screen jumps to the Heart Rate monitor, countdown badge "Returning in 15s" appears top-right, at 0s it returns to the workout with everything preserved. The LED flashes briefly when pressed.
-
-In Terminal 2 you should see the bridge print events as they happen.
-
-If something doesn't work, see **Troubleshooting** at the bottom.
+### Hardware check
+- Turn the encoder CW → resistance +1 per click (visible on the program timeline)
+- Turn CCW → resistance –1
+- Press the button → app jumps to Pulse View, "Returning in 15s" badge counts down, auto-returns. LED flashes on press.
 
 ---
 
-## 8. Auto-start on Boot (Kiosk Mode)
+## 8. Auto-start on boot (kiosk mode)
 
-Once manual testing works, set it up to start automatically at boot with no interaction required.
-
-### systemd service — static web server
-
+### systemd — static server
 ```bash
-sudo nano /etc/systemd/system/cyclestats-web.service
+sudo nano /etc/systemd/system/spindeck-web.service
 ```
-Paste (replace `YOUR_USERNAME` with the output of `whoami`):
 ```ini
 [Unit]
-Description=Cycle Stats Pro — static web server
+Description=SpinDeck — static web server
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/serve -s /home/YOUR_USERNAME/cycle-stats-pro -l 5173
+ExecStart=/usr/bin/serve -s /home/pi/spindeck -l 5173
 Restart=always
-User=YOUR_USERNAME
+User=pi
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-### systemd service — GPIO bridge
-
+### systemd — hardware bridge
 ```bash
-sudo nano /etc/systemd/system/cyclestats-hw.service
+sudo nano /etc/systemd/system/spindeck-hw.service
 ```
-Paste (replace `YOUR_USERNAME` with the output of `whoami`):
 ```ini
 [Unit]
-Description=Cycle Stats Pro — GPIO hardware bridge
+Description=SpinDeck — GPIO hardware bridge
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /home/YOUR_USERNAME/cycle-stats-pro/encoder.py
+ExecStart=/usr/bin/python3 /home/pi/spindeck/hardwareBridge.py
 Restart=always
-User=YOUR_USERNAME
-WorkingDirectory=/home/YOUR_USERNAME
+User=pi
 
 [Install]
 WantedBy=multi-user.target
-```
-
-> **Note:** `WorkingDirectory` is required — lgpio (the GPIO backend on Pi OS Bookworm) creates temporary pipe files in the working directory and will fail if it defaults to `/`.
-
-### Enable + start both
-
-Also ensure your user is in the `gpio` group (required for GPIO access on Pi OS Bookworm):
-```bash
-sudo usermod -a -G gpio YOUR_USERNAME
 ```
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable cyclestats-web cyclestats-hw
-sudo systemctl start  cyclestats-web cyclestats-hw
-
-# Verify
-systemctl status cyclestats-web
-systemctl status cyclestats-hw
+sudo systemctl enable spindeck-web spindeck-hw
+sudo systemctl start  spindeck-web spindeck-hw
 ```
-Both should be **active (running)** in green.
 
-### Chromium kiosk — true kiosk mode (no desktop)
-
-This approach boots to CLI and launches X with only Chromium — no desktop environment, no taskbar, no keyring prompt.
-
-**Step 1 — Switch to CLI autologin:**
-
+### Chromium kiosk autostart
 ```bash
-sudo raspi-config nonint do_boot_behaviour B2
+mkdir -p ~/.config/autostart
+nano ~/.config/autostart/spindeck-kiosk.desktop
+```
+```ini
+[Desktop Entry]
+Type=Application
+Name=SpinDeck Kiosk
+Exec=bash -c "sleep 10 && unclutter -idle 0 & chromium-browser --kiosk --force-device-scale-factor=1 --noerrdialogs --disable-infobars --disable-session-crashed-bubble --disable-translate --incognito --touch-events=enabled --check-for-update-interval=31536000 http://localhost:5173"
+X-GNOME-Autostart-enabled=true
 ```
 
-**Step 2 — Create `~/.xinitrc`** (Chromium is the only process X starts):
-
-```bash
-nano ~/.xinitrc
-```
-
-Paste:
-
-```bash
-#!/bin/bash
-xset s off
-xset -dpms
-xset s noblank
-unclutter -idle 0 &
-exec chromium --kiosk --noerrdialogs --disable-infobars \
-  --disable-session-crashed-bubble --disable-translate \
-  --incognito --touch-events=enabled \
-  --check-for-update-interval=31536000 \
-  --password-store=basic \
-  http://localhost:5173
-```
-
-**Step 3 — Auto-start X on login** (add to `~/.bash_profile`):
-
-```bash
-echo '[[ -z $DISPLAY && $XDG_VTNR -eq 1 ]] && startx' >> ~/.bash_profile
-```
-
-### Hide cursor on touchscreen (blank cursor theme)
-
-`unclutter` hides the cursor when idle, but on a touchscreen the cursor reappears on every tap. Fix this by creating a blank Xcursor theme — no extra packages needed, just Python 3.
-
-**Step 1 — Generate the blank cursor file:**
-
-```bash
-python3 << 'EOF'
-import struct, os
-
-magic = b'Xcur'
-file_header = struct.pack('<III', 16, 0x00010000, 1)
-toc = struct.pack('<III', 0xFFFD0002, 1, 28)
-img_header = struct.pack('<IIIIIIIII', 36, 0xFFFD0002, 1, 1, 1, 1, 0, 0, 50)
-pixel = struct.pack('<I', 0x00000000)
-
-data = magic + file_header + toc + img_header + pixel
-with open('/tmp/blank_cursor', 'wb') as f:
-    f.write(data)
-print('Blank cursor created')
-EOF
-```
-
-**Step 2 — Install it as a cursor theme:**
-
-```bash
-mkdir -p ~/.icons/blank-cursor/cursors
-
-for name in left_ptr default pointer hand1 hand2 watch wait xterm text crosshair move grabbing; do
-    cp /tmp/blank_cursor ~/.icons/blank-cursor/cursors/$name
-done
-
-cat > ~/.icons/blank-cursor/index.theme << 'EOF'
-[Icon Theme]
-Name=blank-cursor
-EOF
-
-echo 'Xcursor.theme: blank-cursor' >> ~/.Xresources
-```
-
-**Step 3 — Load the theme in `~/.xinitrc`:**
-
-Add `xrdb -merge ~/.Xresources` before the `exec chromium` line:
-
-```bash
-#!/bin/bash
-xset s off
-xset -dpms
-xset s noblank
-xrdb -merge ~/.Xresources
-unclutter -idle 0 &
-exec chromium --kiosk ...
-```
-
-### Reboot and verify
-
-```bash
-sudo reboot
-```
-
-Boot sequence: **CLI autologin → bash_profile triggers startx → xinitrc launches Chromium directly.**
-
-When the Pi boots:
-
-1. Cycle Stats Pro loads immediately — no desktop, no taskbar, no dialogs.
-2. The encoder and button already work.
-
-No keyboard, no mouse, no clicking required. The bike is ready to use.
+Reboot: `sudo reboot`. When the Pi comes back up: desktop flashes briefly → Chromium takes over fullscreen → SpinDeck splash → Launcher. Encoder and button work immediately.
 
 ---
 
 ## 9. Troubleshooting
 
-### Blank white screen in browser
-- Open DevTools in Chromium (`Ctrl+Shift+I`) → Console tab. Any red errors will tell you what's wrong.
-- Hard-refresh with `Ctrl+Shift+R`.
+### Blank / white screen
+- `Ctrl+Shift+I` → Console for errors
+- Hard refresh: `Ctrl+Shift+R`
 
-### Encoder doesn't work
-- Confirm `encoder.py` is running: `sudo systemctl status cyclestats-hw`
-- Check the wiring: CLK to GPIO 17, DT to GPIO 18, GND to GND.
-- Test without the UI:
-  ```bash
-  sudo systemctl stop cyclestats-hw
-  python3 ~/cycle-stats-pro/encoder.py
-  ```
-  Turn the encoder — you should see output lines being sent. If nothing, it's a wiring/hardware issue.
+### Encoder / button unresponsive
+```bash
+sudo systemctl stop spindeck-hw
+python3 ~/spindeck/hardwareBridge.py
+# turn encoder / press button — script should print events
+```
+If nothing prints → wiring issue.
 
-### Button doesn't do anything
-- Test without the UI (same as above) and press the button — the script should print/send an event.
-- Make sure you wired GPIO 23 to button, and the **other leg to GND** (not 3.3V).
-
-### React doesn't receive events even though Python sees them
-- The React app only connects to the WebSocket when on the BikeComputer workout screen. Pick a program and start a workout first.
-- In Chromium DevTools → Network tab → WS filter — you should see a connection to `ws://localhost:8765`. If it's red/failed, the bridge isn't running.
-
-### "Address already in use" when starting encoder.py
-- Another copy is already running:
-  ```bash
-  sudo systemctl stop cyclestats-hw
-  pkill -f encoder.py
-  ```
+### React not receiving events
+- WebSocket only connects when the user is on the RideDisplay screen. Pick a program first.
+- Chromium DevTools → Network → WS → should show a connection to `ws://localhost:8765`.
 
 ### Logs
 ```bash
-# Web server
-journalctl -u cyclestats-web -f
-
-# Hardware bridge (shows button presses, encoder events)
-journalctl -u cyclestats-hw -f
+journalctl -u spindeck-web -f
+journalctl -u spindeck-hw -f
 ```
 
-### Want to switch back from autostart to manual testing?
+### Stop autostart temporarily
 ```bash
-sudo systemctl stop cyclestats-web cyclestats-hw
-sudo systemctl disable cyclestats-web cyclestats-hw
+sudo systemctl stop spindeck-web spindeck-hw
 ```
-Then run the two manual commands from **Section 7** in two terminals.
 
 ---
 
-## 10. Updating the App Later
+## 10. Updates
 
-When the developer pushes new changes to GitHub, pull + rebuild on the Pi:
-
+On the Pi:
 ```bash
-cd ~/cycle-stats-pro-src
+cd ~/spindeck-src
 git pull
-npm install            # only if package.json changed
+npm install                 # only if package.json changed
 npm run build
-cp -r dist/* ~/cycle-stats-pro/
-cp encoder.py ~/cycle-stats-pro/
-sudo systemctl restart cyclestats-hw   # only if encoder.py changed
+cp -r dist/* ~/spindeck/
+cp hardwareBridge.py ~/spindeck/
+sudo systemctl restart spindeck-hw   # if the Python script changed
 ```
-
-The browser will pick up the new UI on next refresh (`Ctrl+R` in Chromium). The static web server needs no restart.
-
-If you built on a Mac instead, just rebuild and SCP:
-```bash
-# On Mac
-git pull && npm run build
-scp -r dist/* pi@<PI_IP>:~/cycle-stats-pro/
-```
+Browser picks up the new UI on next refresh (`Ctrl+R`).
 
 ---
 
-## 11. Demo Behavior (For Reference)
+## 11. Demo behaviour (for reference)
 
-The app simulates an exercise bike workout with these fixed values:
+Simulated metrics shown on RideDisplay during a session:
 
 | Metric | Value |
 |---|---|
-| Watts | 140 (fixed) |
-| RPM | 65 (fixed) |
-| Speed | 10 km/h |
-| Calories | 500/hour (8.33/min) |
-| Program duration | 2 hours (default) |
-| Interval | 2-minute countdown, auto-restarts |
-| Heart rate (when on HR screen) | 120 BPM |
-| Training zone | Fat Burn (68% of max HR) |
+| Wattage | 140 W (fixed) |
+| Cadence | 65 RPM (fixed) |
+| Speed | 10 km/h (fixed) |
+| Calories | 500 / hour (8.33 / min) |
+| Session length | 2 hours (default) |
+| Segment | 2-min countdown, auto-restart |
+| Pulse rate (Pulse View) | 120 BPM |
+| Training zone | Fat Burn (68 % of max HR, age 44) |
 
-The **only** things the user can physically affect:
-
-- **Rotary encoder** → changes resistance (tension) level up or down
-- **Push button** → shows heart rate monitor for 15 seconds, then auto-returns
-
-Everything else is simulated.
+User-affectable inputs:
+- **Rotary encoder** → resistance 1–30
+- **Push button** → Pulse View for 15 s, auto-return
 
 ---
 
-## 12. Quick Reference Card
+## 12. Quick reference
 
 | Task | Command |
 |---|---|
-| Start web server manually | `serve -s ~/cycle-stats-pro -l 5173` |
-| Start hardware bridge manually | `python3 ~/cycle-stats-pro/encoder.py` |
-| Restart hardware bridge | `sudo systemctl restart cyclestats-hw` |
-| View hardware events live | `journalctl -u cyclestats-hw -f` |
-| Reboot Pi | `sudo reboot` |
-| Find Pi's IP | `hostname -I` |
-| Open app in Chromium | `http://localhost:5173` |
-
----
-
-**Questions?** Contact the developer.
+| Start server manually | `serve -s ~/spindeck -l 5173` |
+| Start hardware bridge manually | `python3 ~/spindeck/hardwareBridge.py` |
+| Restart hardware bridge | `sudo systemctl restart spindeck-hw` |
+| Tail bridge logs | `journalctl -u spindeck-hw -f` |
+| Pi IP | `hostname -I` |
+| Open app | `http://localhost:5173` |

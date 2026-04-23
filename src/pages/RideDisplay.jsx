@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { mockDB } from '@/api/mockDataService';
+import { dataStore } from '@/services/localStore';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Play, Pause, Home, Flame, Sun, Volume2 } from 'lucide-react';
-import { playTypewriterClick } from '../components/bike/sounds';
+import { playTypewriterClick } from '../components/ride/audioCues';
 import { toast } from 'sonner';
-import SpeedometerGauge from '../components/bike/SpeedometerGauge';
-import ProgramDisplay, { primeAudio } from '../components/bike/ProgramDisplay';
-import BrightnessSlider from '../components/bike/BrightnessSlider';
-import VolumeSlider from '../components/bike/VolumeSlider';
-import ConfirmDialog from '../components/bike/ConfirmDialog';
-import { generateProgramData } from '../components/bike/programPatterns';
+import GaugeDial from '../components/ride/GaugeDial';
+import SessionTimeline, { primeAudio } from '../components/ride/SessionTimeline';
+import ScreenDimmer from '../components/ride/ScreenDimmer';
+import AudioControl from '../components/ride/AudioControl';
+import PromptDialog from '../components/ride/PromptDialog';
+import { generateSessionPattern } from '../components/ride/sessionPatterns';
 
 const INTERVAL_DURATION = 120; // 2-minute intervals
 
@@ -40,7 +40,7 @@ function playCoinSound(volumePct = 100) {
   } catch (e) { }
 }
 
-export default function BikeComputer() {
+export default function RideDisplay() {
   const navigate = useNavigate();
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -97,14 +97,14 @@ export default function BikeComputer() {
   const p = new URLSearchParams(window.location.search);
   const programId = p.get('program') || '';
   const programLabel = [p.get('name'), p.get('durationLabel')].filter(Boolean).join(' ');
-  const NUM_BARS = generateProgramData(programId).length;
+  const NUM_BARS = generateSessionPattern(programId).length;
   const maxResistanceForProgram = programId === 'small-step' ? 27 : 30;
 
-  const [programData, setProgramData] = useState(() => generateProgramData(programId));
+  const [programData, setProgramData] = useState(() => generateSessionPattern(programId));
 
   useEffect(() => {
     if (!isManual) {
-      setProgramData(generateProgramData(programId, resistance));
+      setProgramData(generateSessionPattern(programId, resistance));
     } else {
       setProgramData(Array(NUM_BARS).fill(resistance));
     }
@@ -130,7 +130,7 @@ export default function BikeComputer() {
   const volumeRef = useRef(volume);
   useEffect(() => { volumeRef.current = volume; }, [volume]);
 
-  // Restore state from URL params (coming from HeartRateCheck, Pong, or initial load)
+  // Restore state from URL params (coming from PulseView, Pong, or initial load)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (!params.get('program')) return;
@@ -195,7 +195,7 @@ export default function BikeComputer() {
   }, [programId, programLabel]);
 
   const handleHeartRateHold = () => {
-    navigate(createPageUrl('HeartRateCheck') + '?' + buildReturnParams());
+    navigate(createPageUrl('PulseView') + '?' + buildReturnParams());
   };
 
   // Hardware WebSocket bridge — rotary encoder + push button
@@ -214,7 +214,7 @@ export default function BikeComputer() {
             if (msg.type === 'resistance') {
               setResistance(prev => Math.min(30, Math.max(1, prev + (msg.delta || 0))));
             } else if (msg.type === 'button_press' && buildReturnParamsRef.current) {
-              navigate(createPageUrl('HeartRateCheck') + '?' + buildReturnParamsRef.current() + '&autoReturn=15');
+              navigate(createPageUrl('PulseView') + '?' + buildReturnParamsRef.current() + '&autoReturn=15');
             }
           } catch (_) {}
         };
@@ -234,7 +234,7 @@ export default function BikeComputer() {
     const currentElapsed = elapsedRef.current;
     if (currentElapsed < 10) return;
     const avgDivisor = currentStats.readings || 1;
-    await mockDB.entities.Workout.create({
+    await dataStore.entities.Workout.create({
       duration_seconds: currentElapsed,
       calories: Math.round(currentStats.calories),
       distance_km: Math.round(currentStats.distance * 100) / 100,
@@ -310,7 +310,7 @@ export default function BikeComputer() {
   const handleStop = async () => {
     if (elapsedSeconds < 10) { resetWorkout(true); return; }
     const avgDivisor = stats.readings || 1;
-    await mockDB.entities.Workout.create({
+    await dataStore.entities.Workout.create({
       duration_seconds: elapsedSeconds,
       calories: Math.round(stats.calories),
       distance_km: Math.round(stats.distance * 100) / 100,
@@ -339,7 +339,7 @@ export default function BikeComputer() {
       maxSpeed: 0, maxCadence: 0, maxHeartRate: 0, maxPower: 0,
       totalSpeed: 0, totalCadence: 0, totalHeartRate: 0, totalPower: 0, readings: 0
     });
-    if (goHome) navigate(createPageUrl('Home'));
+    if (goHome) navigate(createPageUrl('Launcher'));
   };
 
   const formatTime = (totalSeconds) => {
@@ -357,7 +357,7 @@ export default function BikeComputer() {
 
   const handleHomeClick = () => {
     if (isRunning) setShowHomeConfirm(true);
-    else navigate(createPageUrl('Home'));
+    else navigate(createPageUrl('Launcher'));
   };
 
   const isDimmed = brightness < 100;
@@ -464,7 +464,7 @@ export default function BikeComputer() {
 
           {/* Middle Section: Program Display */}
           <div className="px-3 pb-2 min-h-0 overflow-hidden" style={{ flex: '17 17 0%' }}>
-            <ProgramDisplay
+            <SessionTimeline
               programData={programData}
               currentPosition={programPosition}
               resistance={resistance}
@@ -477,7 +477,7 @@ export default function BikeComputer() {
           {/* Bottom Section — items-stretch so children fit content area (not total height) */}
           <div className="flex items-stretch px-3 pb-3 gap-2.5 min-h-0 overflow-hidden" style={{ flex: '40 40 0%' }}>
             <div className="w-[33%] min-h-0">
-              <SpeedometerGauge value={stats.cadence} max={150} label="RPM" unit="rpm" />
+              <GaugeDial value={stats.cadence} max={150} label="RPM" unit="rpm" />
             </div>
             <div className="flex-1 flex flex-col items-center justify-center rounded-xl border border-zinc-700/40 relative overflow-hidden min-h-0"
               style={{ background: 'linear-gradient(180deg, rgba(20,20,20,0.9) 0%, rgba(10,10,10,0.9) 100%)' }}
@@ -487,23 +487,23 @@ export default function BikeComputer() {
               <span style={{ fontSize: 'clamp(9px, 1.8vh, 14px)' }} className="uppercase tracking-widest text-zinc-500 relative z-10 mt-1">KM</span>
             </div>
             <div className="w-[33%] min-h-0">
-              <SpeedometerGauge value={stats.power} max={300} label="WATTS" unit="watts" />
+              <GaugeDial value={stats.power} max={300} label="WATTS" unit="watts" />
             </div>
           </div>
         </div>
 
-        <ConfirmDialog
+        <PromptDialog
           isOpen={showHomeConfirm}
           title="Leave Program"
           message="Are you sure you want to leave the current program?"
-          onConfirm={() => { setShowHomeConfirm(false); navigate(createPageUrl('Home')); }}
+          onConfirm={() => { setShowHomeConfirm(false); navigate(createPageUrl('Launcher')); }}
           onCancel={() => setShowHomeConfirm(false)}
         />
 
         {showBrightnessSlider && (
           <div className="fixed inset-0 z-40 flex items-center justify-center cursor-pointer" onClick={() => setShowBrightnessSlider(false)}>
             <div className="z-50" onClick={(e) => e.stopPropagation()}>
-              <BrightnessSlider brightness={brightness} setBrightness={setBrightness} onClose={() => setShowBrightnessSlider(false)} />
+              <ScreenDimmer brightness={brightness} setBrightness={setBrightness} onClose={() => setShowBrightnessSlider(false)} />
             </div>
           </div>
         )}
@@ -511,7 +511,7 @@ export default function BikeComputer() {
         {showVolumeSlider && (
           <div className="fixed inset-0 z-40 flex items-center justify-center cursor-pointer" onClick={() => setShowVolumeSlider(false)}>
             <div className="z-50" onClick={(e) => e.stopPropagation()}>
-              <VolumeSlider volume={volume} setVolume={handleVolumeChange} onClose={() => setShowVolumeSlider(false)} />
+              <AudioControl volume={volume} setVolume={handleVolumeChange} onClose={() => setShowVolumeSlider(false)} />
             </div>
           </div>
         )}

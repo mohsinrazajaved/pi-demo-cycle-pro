@@ -1,4 +1,4 @@
-export default function SpeedometerGauge({ value, max, label }) {
+export default function GaugeDial({ value, max, label }) {
   const percentage = Math.min((value / max) * 100, 100);
   const angle = (percentage / 100) * 180 - 90;
 

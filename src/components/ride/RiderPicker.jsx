@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { mockDB } from '@/api/mockDataService';
+import { dataStore } from '@/services/localStore';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { X, Pencil, Check, Trash2, Plus } from 'lucide-react';
-import { playTypewriterClick } from './sounds';
+import { playTypewriterClick } from './audioCues';
 
-export default function ChangeProfileModal({ currentProfile, onSelect, onClose, onDelete }) {
+export default function RiderPicker({ currentProfile, onSelect, onClose, onDelete }) {
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   useEffect(() => {
-    mockDB.entities.Profile.list('-created_date', 50).then(setProfiles);
+    dataStore.entities.Profile.list('-created_date', 50).then(setProfiles);
   }, []);
 
   const handleSelect = (profile) => {
@@ -21,14 +21,14 @@ export default function ChangeProfileModal({ currentProfile, onSelect, onClose, 
 
   const handleEdit = (profile) => {
     onClose();
-    navigate(createPageUrl('Profile') + `?id=${profile.id}`);
+    navigate(createPageUrl('RiderSetup') + `?id=${profile.id}`);
   };
 
   const handleDeleteConfirm = async () => {
     const deletedId = confirmDeleteId;
-    await mockDB.entities.Profile.delete(deletedId);
+    await dataStore.entities.Profile.delete(deletedId);
     setConfirmDeleteId(null);
-    const updated = await mockDB.entities.Profile.list('-created_date', 50);
+    const updated = await dataStore.entities.Profile.list('-created_date', 50);
     setProfiles(updated);
     if (currentProfile?.id === deletedId) {
       onDelete?.();
@@ -51,7 +51,7 @@ export default function ChangeProfileModal({ currentProfile, onSelect, onClose, 
         <div className="flex items-center justify-between p-4 border-b border-zinc-800">
           <span className="text-white font-bold text-lg">Select Profile</span>
           <div className="flex items-center gap-2">
-            <button onClick={() => { playTypewriterClick(); onClose(); navigate(createPageUrl('Profile')); }} className="w-8 h-8 rounded-lg bg-[#FF3F03] hover:bg-[#cc3300] flex items-center justify-center">
+            <button onClick={() => { playTypewriterClick(); onClose(); navigate(createPageUrl('RiderSetup')); }} className="w-8 h-8 rounded-lg bg-[#FF3F03] hover:bg-[#cc3300] flex items-center justify-center">
               <Plus className="w-4 h-4 text-white" />
             </button>
             <button onClick={() => { playTypewriterClick(); onClose(); }} className="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center">

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Delete, ChevronUp, ChevronDown } from 'lucide-react';
 
-import { playTypewriterClick } from './sounds';
+import { playTypewriterClick } from './audioCues';
 
-export default function NumericKeypad({ value, onChange, onClose, onPrev, onNext }) {
+export default function DigitPad({ value, onChange, onClose, onPrev, onNext }) {
   const handleKey = (key) => {
     if (key === 'DEL') {
       onChange(String(value).slice(0, -1));

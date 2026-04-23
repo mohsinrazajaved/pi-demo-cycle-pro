@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { mockDB } from '@/api/mockDataService';
+import { dataStore } from '@/services/localStore';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { ArrowLeft, Flame, Clock, Route, TrendingUp } from 'lucide-react';
-import { playTypewriterClick } from '../components/bike/sounds';
-import WorkoutCard from '../components/history/WorkoutCard';
-import ProgressChart from '../components/history/ProgressChart';
+import { playTypewriterClick } from '../components/ride/audioCues';
+import SessionCard from '../components/session/SessionCard';
+import ChartCard from '../components/session/ChartCard';
 import { Skeleton } from "@/components/ui/skeleton";
 import { ComposedChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Area } from 'recharts';
 import { format } from 'date-fns';
@@ -35,12 +35,12 @@ const TIME_PERIODS = [
   { label: 'All', days: null },
 ];
 
-export default function WorkoutHistory() {
+export default function SessionLog() {
   const [selectedPeriod, setSelectedPeriod] = useState('1M');
 
   const { data: workouts = [], isLoading } = useQuery({
     queryKey: ['workouts'],
-    queryFn: () => mockDB.entities.Workout.list('-workout_date', 500)
+    queryFn: () => dataStore.entities.Workout.list('-workout_date', 500)
   });
 
   const filteredWorkouts = useMemo(() => {
@@ -101,7 +101,7 @@ export default function WorkoutHistory() {
       {/* Header */}
       <div className="flex-shrink-0 flex items-center gap-2 px-5 py-3 border-b border-zinc-800/50">
         <Link
-          to={createPageUrl('Home')}
+          to={createPageUrl('Launcher')}
           onClick={() => playTypewriterClick()}
           className="w-8 h-8 rounded-xl border border-zinc-700/50 flex items-center justify-center transition-all hover:border-[#FF3F03]/40 active:scale-95"
           style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}
@@ -153,7 +153,7 @@ export default function WorkoutHistory() {
             <h3 className="text-base font-medium text-zinc-400 mb-1">No workouts yet</h3>
             <p className="text-zinc-600 text-xs mb-5">Complete your first ride to start tracking progress</p>
             <Link
-              to={createPageUrl('BikeComputer')}
+              to={createPageUrl('RideDisplay')}
               className="inline-flex items-center gap-2 px-5 py-2 rounded-xl border border-[#FF3F03]/50 text-[#FF3F03] font-medium text-sm transition-all hover:bg-[#FF3F03]/10"
             >
               Start Riding
@@ -184,7 +184,7 @@ export default function WorkoutHistory() {
               <div className="space-y-2 mb-3">
                 <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Progress</h2>
                 <div className="grid gap-2">
-                  <ProgressChart
+                  <ChartCard
                     data={[...filteredWorkouts].reverse()}
                     dataKey="calories"
                     label="Calories Burned"
@@ -261,7 +261,7 @@ export default function WorkoutHistory() {
               <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Recent Workouts</h2>
               <div className="space-y-2">
                 {filteredWorkouts.map(workout => (
-                  <WorkoutCard key={workout.id} workout={workout} />
+                  <SessionCard key={workout.id} workout={workout} />
                 ))}
               </div>
             </div>

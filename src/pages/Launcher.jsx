@@ -2,11 +2,11 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Power, User, History, Volume2 } from 'lucide-react';
-import { playTypewriterClick } from '../components/bike/sounds';
-import { mockDB } from '@/api/mockDataService';
-import SplashScreen from '../components/bike/SplashScreen';
-import ChangeProfileModal from '../components/bike/ChangeProfileModal';
-import VolumeSlider from '../components/bike/VolumeSlider';
+import { playTypewriterClick } from '../components/ride/audioCues';
+import { dataStore } from '@/services/localStore';
+import BootSplash from '../components/ride/BootSplash';
+import RiderPicker from '../components/ride/RiderPicker';
+import AudioControl from '../components/ride/AudioControl';
 
 // Module-level flag: splash shows once per app session (resets on page reload).
 // Navigating back to Home from another page does NOT trigger it again.
@@ -38,7 +38,7 @@ function MiniChart({ levels }) {
   );
 }
 
-export default function Home() {
+export default function Launcher() {
   const navigate = useNavigate();
   const [activeProfile, setActiveProfile] = useState(null);
   const [isPoweredOff, setIsPoweredOff] = useState(false);
@@ -53,7 +53,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    mockDB.entities.Profile.list('-created_date', 1).then((results) => {
+    dataStore.entities.Profile.list('-created_date', 1).then((results) => {
       if (results.length > 0) setActiveProfile(results[0]);
     });
   }, []);
@@ -77,9 +77,9 @@ export default function Home() {
   const handleProgramSelect = (program) => {
     playTypewriterClick();
     if (program.selectTime) {
-      navigate(createPageUrl('Time') + `?program=${program.id}&name=${encodeURIComponent(program.name)}`);
+      navigate(createPageUrl('DurationSelect') + `?program=${program.id}&name=${encodeURIComponent(program.name)}`);
     } else {
-      navigate(createPageUrl('BikeComputer') + `?program=${program.id}`);
+      navigate(createPageUrl('RideDisplay') + `?program=${program.id}`);
     }
   };
 
@@ -96,17 +96,17 @@ export default function Home() {
       {/* Top accent line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FF3F03]/60 to-transparent" />
 
-      {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+      {showSplash && <BootSplash onComplete={handleSplashComplete} />}
 
       {showVolumeSlider && (
         <div className="fixed inset-0 z-40 flex items-center justify-center" onClick={() => setShowVolumeSlider(false)}>
           <div className="z-50" onClick={e => e.stopPropagation()}>
-            <VolumeSlider volume={volume} setVolume={handleVolumeChange} onClose={() => setShowVolumeSlider(false)} />
+            <AudioControl volume={volume} setVolume={handleVolumeChange} onClose={() => setShowVolumeSlider(false)} />
           </div>
         </div>
       )}
       {showChangeProfile && (
-        <ChangeProfileModal
+        <RiderPicker
           currentProfile={activeProfile}
           onSelect={p => setActiveProfile(p)}
           onClose={() => setShowChangeProfile(false)}
@@ -134,7 +134,7 @@ export default function Home() {
           {/* Action buttons */}
           {[
             { icon: Volume2,  action: () => setShowVolumeSlider(true),  label: 'Volume' },
-            { icon: History,  action: () => navigate(createPageUrl('WorkoutHistory')), label: 'History' },
+            { icon: History,  action: () => navigate(createPageUrl('SessionLog')), label: 'History' },
             { icon: User,     action: () => setShowChangeProfile(true), label: 'Profile' },
           ].map(({ icon: Icon, action, label }) => (
             <button key={label}

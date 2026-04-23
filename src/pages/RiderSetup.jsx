@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { mockDB } from '@/api/mockDataService';
+import { dataStore } from '@/services/localStore';
 import { ArrowLeft, Save } from 'lucide-react';
-import { playTypewriterClick } from '../components/bike/sounds';
-import QwertyKeyboard from '../components/bike/QwertyKeyboard';
-import NumericKeypad from '../components/bike/NumericKeypad';
+import { playTypewriterClick } from '../components/ride/audioCues';
+import AlphaPad from '../components/ride/AlphaPad';
+import DigitPad from '../components/ride/DigitPad';
 
-export default function Profile() {
+export default function RiderSetup() {
   const navigate = useNavigate();
   const editId = new URLSearchParams(window.location.search).get('id');
 
@@ -20,7 +20,7 @@ export default function Profile() {
 
   useEffect(() => {
     if (!editId) return;
-    mockDB.entities.Profile.filter({ id: editId }).then((results) => {
+    dataStore.entities.Profile.filter({ id: editId }).then((results) => {
       if (!results.length) return;
       const p = results[0];
       setForm({
@@ -52,9 +52,9 @@ export default function Profile() {
       height: Number(form.height), height_unit: form.heightUnit,
       gender: form.gender || undefined, activity_level: form.activityLevel || undefined,
     };
-    if (editId) await mockDB.entities.Profile.update(editId, data);
-    else await mockDB.entities.Profile.create(data);
-    navigate(createPageUrl('Home'));
+    if (editId) await dataStore.entities.Profile.update(editId, data);
+    else await dataStore.entities.Profile.create(data);
+    navigate(createPageUrl('Launcher'));
   };
 
   const fields = ['name', 'age', 'weight', 'height'];
@@ -91,7 +91,7 @@ export default function Profile() {
         {/* Header */}
         <div className="flex gap-2 flex-shrink-0">
           <button
-            onMouseDown={(e) => { e.preventDefault(); playTypewriterClick(); navigate(createPageUrl('Home')); }}
+            onMouseDown={(e) => { e.preventDefault(); playTypewriterClick(); navigate(createPageUrl('Launcher')); }}
             className="h-9 w-9 rounded-xl border border-zinc-700/50 flex items-center justify-center flex-shrink-0 transition-all hover:border-[#FF3F03]/40 active:scale-95"
           style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}
           >
@@ -185,10 +185,10 @@ export default function Profile() {
       {/* RIGHT PANEL — keyboard */}
       <div className="flex-1 flex items-center justify-center p-5 min-w-0 relative z-10">
         {activeField === 'name' ? (
-          <QwertyKeyboard value={form.name} onChange={(v) => set('name', v)}
+          <AlphaPad value={form.name} onChange={(v) => set('name', v)}
             onClose={() => {}} onPrev={goToPrev} onNext={goToNext} />
         ) : (
-          <NumericKeypad value={form[activeField]} onChange={(v) => set(activeField, v)}
+          <DigitPad value={form[activeField]} onChange={(v) => set(activeField, v)}
             onClose={() => {}} onPrev={goToPrev} onNext={goToNext} />
         )}
       </div>

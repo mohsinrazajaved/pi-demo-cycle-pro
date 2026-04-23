@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Mock hardware bridge for testing without the Pi.
+SpinDeck — Mock Hardware Bridge
+For testing on a Mac/PC when you don't have the Pi wired up.
 
 Three ways to trigger events:
   1. Keyboard (if run interactively):

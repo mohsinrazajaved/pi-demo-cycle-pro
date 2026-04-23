@@ -17,7 +17,7 @@ function addTrend(points, valueKey) {
   }));
 }
 
-export default function ProgressChart({ data, dataKey, label, unit }) {
+export default function ChartCard({ data, dataKey, label, unit }) {
   const COLOR = '#FF3F03';
   const TREND_COLOR = '#9ca3af';
 

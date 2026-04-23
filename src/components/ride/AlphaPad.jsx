@@ -8,9 +8,9 @@ const ROWS = [
   ['Z','X','C','V','B','N','M'],
 ];
 
-import { playTypewriterClick } from './sounds';
+import { playTypewriterClick } from './audioCues';
 
-export default function QwertyKeyboard({ value, onChange, onClose, onPrev, onNext }) {
+export default function AlphaPad({ value, onChange, onClose, onPrev, onNext }) {
   const [caps, setCaps] = useState(true);
 
   const handleKey = (key) => {

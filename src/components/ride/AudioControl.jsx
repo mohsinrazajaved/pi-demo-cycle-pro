@@ -1,9 +1,9 @@
 import React from 'react';
 import { Slider } from "@/components/ui/slider";
 import { Volume2, VolumeX, X } from 'lucide-react';
-import { playTypewriterClick } from './sounds';
+import { playTypewriterClick } from './audioCues';
 
-export default function VolumeSlider({ volume, setVolume, onClose }) {
+export default function AudioControl({ volume, setVolume, onClose }) {
   return (
     <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl p-6 w-[33rem] shadow-2xl z-50">
       <div className="flex items-center justify-between mb-4">

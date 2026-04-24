@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 
 const DESIGN_W = 1024;
 const DESIGN_H = 600;
+// Safety margin to absorb HDMI overscan / display-bezel crop on the Pi.
+// 0.96 = ~2% inset on every side (≈ 20px top+bottom, 41px left+right at 600vh).
+// Prevents cropping even when `window.innerHeight` lies about the visible area.
+const SAFETY = 0.96;
 
 /**
  * Locks the app to a 1024×600 design canvas and scales it to fit whatever
@@ -21,7 +25,7 @@ export default function FitToViewport({ children }) {
     return () => window.removeEventListener('resize', compute);
   }, []);
 
-  const scale = Math.min(dims.w / DESIGN_W, dims.h / DESIGN_H);
+  const scale = Math.min(dims.w / DESIGN_W, dims.h / DESIGN_H) * SAFETY;
   const scaledW = DESIGN_W * scale;
   const scaledH = DESIGN_H * scale;
   const offsetX = (dims.w - scaledW) / 2;

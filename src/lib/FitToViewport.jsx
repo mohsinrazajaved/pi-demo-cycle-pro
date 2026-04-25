@@ -19,7 +19,13 @@ export default function FitToViewport({ children }) {
   const [dims, setDims] = useState({ w: window.innerWidth, h: window.innerHeight });
 
   useEffect(() => {
-    const compute = () => setDims({ w: window.innerWidth, h: window.innerHeight });
+    // Some kiosks (Chromium with no --window-size) report an `innerWidth` /
+    // `innerHeight` larger than the actual display. Clamp to `screen.*` so we
+    // never scale to a viewport that includes off-screen pixels.
+    const compute = () => setDims({
+      w: Math.min(window.innerWidth, window.screen.width),
+      h: Math.min(window.innerHeight, window.screen.height),
+    });
     compute();
     window.addEventListener('resize', compute);
     return () => window.removeEventListener('resize', compute);

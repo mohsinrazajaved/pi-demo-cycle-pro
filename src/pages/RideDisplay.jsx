@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { dataStore } from '@/services/localStore';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Play, Pause, Home, Flame, Sun, Volume2 } from 'lucide-react';
+import { Play, Pause, Home, Flame, Sun, Volume2, Heart } from 'lucide-react';
 import { playTypewriterClick } from '../components/ride/audioCues';
 import { toast } from 'sonner';
 import GaugeDial from '../components/ride/GaugeDial';
@@ -366,6 +366,21 @@ export default function RideDisplay() {
   return (
     <div className="h-screen w-screen overflow-hidden" style={{ background: '#000' }}>
       <div className="relative text-white overflow-hidden" style={{ width: '100%', height: '100%' }}>
+        {/* TEST: simulate the GPIO button. Remove this <button> once the
+            physical button is wired up — the WebSocket bridge will fire the
+            same navigation automatically. */}
+        <button
+          onClick={() => navigate(createPageUrl('PulseView') + '?' + buildReturnParams() + '&autoReturn=' + PULSE_VIEW_DURATION_SEC)}
+          title="Simulate GPIO push button"
+          className="absolute z-50 flex items-center justify-center rounded-md transition-all active:scale-90"
+          style={{
+            top: '4px', right: '4px', width: '36px', height: '36px',
+            background: '#3f3f3f', border: '1px dashed #FF3F03',
+          }}
+        >
+          <Heart className="text-[#FF3F03]" style={{ width: '18px', height: '18px' }} strokeWidth={2.5} />
+        </button>
+
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }} onClick={isDimmed && !showBrightnessSlider ? () => setBrightness(100) : undefined}>
           {isDimmed && !showBrightnessSlider && (
             <div className="absolute inset-0 z-40 cursor-pointer bg-black pointer-events-auto" style={{ opacity: (100 - brightness) / 100 }} />

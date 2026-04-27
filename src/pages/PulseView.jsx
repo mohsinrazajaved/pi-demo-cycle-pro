@@ -4,6 +4,16 @@ import { createPageUrl } from '@/utils';
 import SessionTimeline from '../components/ride/SessionTimeline';
 import { dataStore } from '@/services/localStore';
 import { generateSessionPattern } from '../components/ride/sessionPatterns';
+import { INTERVAL_DURATION_SEC, DEFAULT_TARGET_DURATION_SEC } from '@/config';
+
+// Safely turn a URL param into a number. Returns `fallback` for null,
+// '', NaN, negative, or anything not finite. Prevents the dreaded
+// "Number('') === 0 → falls through to default" bug.
+function safeNum(raw, fallback) {
+  if (raw == null || raw === '') return fallback;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
 
 function HeartRateGauge({ heartRate }) {
   const MIN = 60;
@@ -58,25 +68,26 @@ export default function PulseView() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
 
-  // State passed from RideDisplay
+  // State passed from RideDisplay (parse defensively so a missing/bad value
+  // can never bump the timers to a wrong number)
   const program = urlParams.get('program') || '';
   const targetEndTimeParam = urlParams.get('targetEndTime') || '';
   const isManual = urlParams.get('manual') === '1';
   const isInfinity = targetEndTimeParam === 'infinity' || urlParams.get('infinity') === '1';
-  const targetDuration = isInfinity ? Infinity : (Number(targetEndTimeParam) || 30 * 60);
+  const targetDuration = isInfinity ? Infinity : safeNum(targetEndTimeParam, DEFAULT_TARGET_DURATION_SEC);
   const wasRunning = urlParams.get('running') === '1';
 
-  const [elapsedSeconds, setElapsedSeconds] = useState(Number(urlParams.get('elapsed') || 0));
-  const [intervalSecondsRemaining, setIntervalSecondsRemaining] = useState(Number(urlParams.get('intervalRemaining') || 30));
-  const [programPosition, setProgramPosition] = useState(Number(urlParams.get('programPosition') || 0));
+  const [elapsedSeconds, setElapsedSeconds] = useState(safeNum(urlParams.get('elapsed'), 0));
+  const [intervalSecondsRemaining, setIntervalSecondsRemaining] = useState(safeNum(urlParams.get('intervalRemaining'), INTERVAL_DURATION_SEC));
+  const [programPosition, setProgramPosition] = useState(safeNum(urlParams.get('programPosition'), 0));
 
   const [heartRate, setHeartRate] = useState(120); // demo: 120 BPM
   const [simRpm, setSimRpm] = useState(65);
   const [simPower, setSimPower] = useState(140);
-  const [resistance, setResistance] = useState(Number(urlParams.get('resistance') || 5));
+  const [resistance, setResistance] = useState(safeNum(urlParams.get('resistance'), 5));
   const [timeMultiplier, setTimeMultiplier] = useState(1);
   const [profileAge, setProfileAge] = useState(44); // age 44 → max HR 176 → 120/176 = 68%
-  const autoReturn = Number(urlParams.get('autoReturn') || 0);
+  const autoReturn = safeNum(urlParams.get('autoReturn'), 0);
 
   // Load profile age (fallback to 44 for demo math: 120 BPM = 68% of max HR)
   useEffect(() => {
@@ -98,7 +109,7 @@ export default function PulseView() {
     return () => clearInterval(timer);
   }, []); // eslint-disable-line
 
-  const INTERVAL_DURATION = 30;
+  const INTERVAL_DURATION = INTERVAL_DURATION_SEC;
 
   // Keep timers running if workout was running
   useEffect(() => {

@@ -11,8 +11,9 @@ import ScreenDimmer from '../components/ride/ScreenDimmer';
 import AudioControl from '../components/ride/AudioControl';
 import PromptDialog from '../components/ride/PromptDialog';
 import { generateSessionPattern } from '../components/ride/sessionPatterns';
+import { INTERVAL_DURATION_SEC, PULSE_VIEW_DURATION_SEC } from '@/config';
 
-const INTERVAL_DURATION = 120; // 2-minute intervals
+const INTERVAL_DURATION = INTERVAL_DURATION_SEC;
 
 function playCoinSound(volumePct = 100) {
   try {
@@ -214,7 +215,7 @@ export default function RideDisplay() {
             if (msg.type === 'resistance') {
               setResistance(prev => Math.min(30, Math.max(1, prev + (msg.delta || 0))));
             } else if (msg.type === 'button_press' && buildReturnParamsRef.current) {
-              navigate(createPageUrl('PulseView') + '?' + buildReturnParamsRef.current() + '&autoReturn=15');
+              navigate(createPageUrl('PulseView') + '?' + buildReturnParamsRef.current() + '&autoReturn=' + PULSE_VIEW_DURATION_SEC);
             }
           } catch (_) {}
         };

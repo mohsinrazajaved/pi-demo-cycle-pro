@@ -1,26 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-// Served from public/logo.png — works fully offline, no internet required.
-const LOGO_URL = '/logo.png';
+// Served from public/ — works fully offline, no internet required.
+const LOGO_URL  = '/logo.png';
+const SOUND_URL = '/boot.mp3';
+
+// How long the logo stays on screen before the home view shows.
+// Tweak here if the customer asks for a different duration.
+const SPLASH_DURATION_MS = 5000;
+const FADE_DURATION_MS   = 700;
 
 export default function BootSplash({ onComplete }) {
   const [fading, setFading] = useState(false);
+  const audioRef = useRef(null);
 
   useEffect(() => {
-    const fadeTimer = setTimeout(() => setFading(true), 3000);
-    const completeTimer = setTimeout(() => onComplete(), 3800);
+    // Try to play the boot sound. Browsers block autoplay until the page has
+    // had a user gesture; if blocked, we silently fall back to a silent splash.
+    const audio = new Audio(SOUND_URL);
+    audio.volume = Number(localStorage.getItem('bikeVolume') ?? 100) / 100;
+    audio.play().catch(() => { /* autoplay blocked — silent splash */ });
+    audioRef.current = audio;
+
+    const fadeTimer     = setTimeout(() => setFading(true), SPLASH_DURATION_MS - FADE_DURATION_MS);
+    const completeTimer = setTimeout(() => onComplete(),     SPLASH_DURATION_MS);
+
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(completeTimer);
+      try { audio.pause(); } catch (_) { /* noop */ }
     };
   }, [onComplete]);
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center transition-opacity duration-700"
+      className="fixed inset-0 z-[200] flex items-center justify-center transition-opacity"
       style={{
         backgroundColor: '#515454',
         opacity: fading ? 0 : 1,
+        transitionDuration: `${FADE_DURATION_MS}ms`,
         pointerEvents: fading ? 'none' : 'auto',
       }}
     >

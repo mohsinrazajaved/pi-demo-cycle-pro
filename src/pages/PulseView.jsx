@@ -204,9 +204,9 @@ export default function PulseView() {
 
   return (
     <div className="h-screen w-screen text-white overflow-hidden relative" style={{ background: '#000' }}>
-      {/* Auto-return countdown badge */}
+      {/* Auto-return countdown badge — bottom-centered */}
       {autoReturn > 0 && (
-        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-0.5 rounded-md text-[11px] font-bold text-[#FF3F03]"
+        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-0.5 rounded-md text-[11px] font-bold text-[#FF3F03]"
           style={{ background: '#3f3f3f' }}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#FF3F03] animate-pulse" />

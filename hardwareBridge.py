@@ -26,9 +26,31 @@ Install dependencies on Pi:
 
 import asyncio
 import json
+import os
+import socket
 import RPi.GPIO as GPIO
 import websockets
 import time
+
+# ── systemd watchdog integration ─────────────────────────────────────────────
+# Lets systemd's `WatchdogSec=` kill+restart this process if it hangs. Pure
+# stdlib — no `systemd` python package needed. No-op when run outside systemd.
+def sd_notify(msg: str) -> None:
+    addr = os.environ.get("NOTIFY_SOCKET")
+    if not addr:
+        return
+    if addr.startswith("@"):  # abstract namespace socket
+        addr = "\0" + addr[1:]
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as s:
+            s.connect(addr)
+            s.sendall(msg.encode("utf-8"))
+    except OSError:
+        pass
+
+# Default heartbeat every 5s; if systemd sets WATCHDOG_USEC, ping at half its rate.
+_watchdog_usec = int(os.environ.get("WATCHDOG_USEC", "10000000"))  # default 10s
+HEARTBEAT_INTERVAL_S = max(1.0, (_watchdog_usec / 1_000_000) / 2)
 
 # ── Pin config ──────────────────────────────────────────────────────────────
 ENCODER_CLK = 17
@@ -103,16 +125,27 @@ async def handler(websocket):
         connected_clients.discard(websocket)
         print(f"[-] Client disconnected ({len(connected_clients)} total)")
 
+async def heartbeat():
+    """Tell systemd we're still alive, on every loop iteration."""
+    while True:
+        sd_notify("WATCHDOG=1")
+        await asyncio.sleep(HEARTBEAT_INTERVAL_S)
+
 async def main():
     print("SpinDeck hardware bridge starting...")
     print(f"  Encoder CLK={ENCODER_CLK}, DT={ENCODER_DT}")
     print(f"  Button PIN={BUTTON_PIN}, LED={BUTTON_LED}")
     print("  WebSocket server on ws://localhost:8765")
+    if os.environ.get("NOTIFY_SOCKET"):
+        print(f"  systemd watchdog enabled (heartbeat every {HEARTBEAT_INTERVAL_S:.1f}s)")
 
     async with websockets.serve(handler, "localhost", 8765):
+        # Tell systemd we're up and serving
+        sd_notify("READY=1")
         await asyncio.gather(
             poll_encoder(),
             poll_button(),
+            heartbeat(),
             asyncio.Future()  # run forever
         )
 
@@ -122,5 +155,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nShutting down...")
     finally:
+        sd_notify("STOPPING=1")
         GPIO.output(BUTTON_LED, GPIO.LOW)
         GPIO.cleanup()

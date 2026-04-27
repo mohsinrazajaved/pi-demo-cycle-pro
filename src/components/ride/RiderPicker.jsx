@@ -39,56 +39,58 @@ export default function RiderPicker({ currentProfile, onSelect, onClose, onDelet
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
       {/* Delete confirmation dialog */}
       {confirmDeleteId && (
-        <div className="absolute z-10 bg-zinc-900 border border-zinc-700 rounded-xl p-6 shadow-2xl flex flex-col items-center gap-4 w-80">
-          <p className="text-white text-center font-semibold">Are you sure you want to delete this profile?</p>
+        <div className="absolute z-10 rounded-md p-6 flex flex-col items-center gap-4 w-80" style={{ background: '#3f3f3f' }}>
+          <p className="text-white text-center font-bold">Are you sure you want to delete this profile?</p>
           <div className="flex gap-3 w-full">
-            <button onClick={() => { playTypewriterClick(); setConfirmDeleteId(null); }} className="flex-1 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white font-bold">Cancel</button>
-            <button onClick={() => { playTypewriterClick(); handleDeleteConfirm(); }} className="flex-1 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold">Delete</button>
+            <button onClick={() => { playTypewriterClick(); setConfirmDeleteId(null); }} className="flex-1 py-2 rounded-md text-white font-black" style={{ background: '#000' }}>Cancel</button>
+            <button onClick={() => { playTypewriterClick(); handleDeleteConfirm(); }} className="flex-1 py-2 rounded-md bg-red-600 text-white font-black">Delete</button>
           </div>
         </div>
       )}
-      <div className="bg-zinc-900 border border-zinc-700 rounded-xl w-2/3 max-h-[70vh] flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-          <span className="text-white font-bold text-lg">Select Profile</span>
+      <div className="rounded-md w-2/3 max-h-[70vh] flex flex-col" style={{ background: '#3f3f3f' }}>
+        <div className="flex items-center justify-between p-4">
+          <span className="text-white font-black text-lg uppercase tracking-wide">Select Profile</span>
           <div className="flex items-center gap-2">
-            <button onClick={() => { playTypewriterClick(); onClose(); navigate(createPageUrl('RiderSetup')); }} className="w-8 h-8 rounded-lg bg-[#FF3F03] hover:bg-[#cc3300] flex items-center justify-center">
-              <Plus className="w-4 h-4 text-white" />
+            <button onClick={() => { playTypewriterClick(); onClose(); navigate(createPageUrl('RiderSetup')); }} className="w-9 h-9 rounded-md bg-[#FF3F03] flex items-center justify-center">
+              <Plus className="w-5 h-5 text-white" strokeWidth={3} />
             </button>
-            <button onClick={() => { playTypewriterClick(); onClose(); }} className="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center">
-              <X className="w-4 h-4 text-zinc-400" />
+            <button onClick={() => { playTypewriterClick(); onClose(); }} className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: '#000' }}>
+              <X className="w-4 h-4 text-zinc-300" strokeWidth={2.5} />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="flex-1 overflow-y-auto p-4 pt-0 space-y-2">
           {profiles.length === 0 && (
-            <p className="text-zinc-500 text-sm text-center py-6">No profiles created yet.</p>
+            <p className="text-zinc-300 text-sm text-center py-6">No profiles created yet.</p>
           )}
           {profiles.map((profile) => {
             const isActive = currentProfile?.id === profile.id || currentProfile === profile.name;
             return (
               <div
                 key={profile.id}
-                className={`flex items-center justify-between rounded-lg p-3 border ${isActive ? 'border-[#FF3F03] bg-[#FF3F03]/10' : 'border-zinc-800 bg-zinc-800/50 hover:bg-zinc-800'
-                  }`}
+                className="flex items-center justify-between rounded-md p-3"
+                style={{ background: isActive ? '#FF3F03' : '#000' }}
               >
                 <button className="flex-1 text-left" onClick={() => { playTypewriterClick(); handleSelect(profile); }}>
                   <div className="flex items-center gap-2">
-                    {isActive && <Check className="w-4 h-4 text-[#FF3F03]" />}
-                    <span className="text-white font-bold text-xl">{profile.name}</span>
+                    {isActive && <Check className="w-5 h-5 text-white" strokeWidth={3} />}
+                    <span className="text-white font-black text-xl">{profile.name}</span>
                   </div>
                 </button>
                 <button
                   onClick={() => { playTypewriterClick(); handleEdit(profile); }}
-                  className="ml-3 w-9 h-9 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center flex-shrink-0"
+                  className="ml-3 w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0"
+                  style={{ background: isActive ? '#000' : '#3f3f3f' }}
                 >
-                  <Pencil className="w-4 h-4 text-[#FF3F03]" />
+                  <Pencil className="w-4 h-4 text-[#FF3F03]" strokeWidth={2.5} />
                 </button>
                 <button
                   onClick={() => { playTypewriterClick(); setConfirmDeleteId(profile.id); }}
-                  className="ml-2 w-9 h-9 rounded-lg bg-zinc-700 hover:bg-red-800 flex items-center justify-center flex-shrink-0"
+                  className="ml-2 w-9 h-9 rounded-md flex items-center justify-center flex-shrink-0"
+                  style={{ background: isActive ? '#000' : '#3f3f3f' }}
                 >
-                  <Trash2 className="w-4 h-4 text-red-400" />
+                  <Trash2 className="w-4 h-4 text-red-400" strokeWidth={2.5} />
                 </button>
               </div>
             );

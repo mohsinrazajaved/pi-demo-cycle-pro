@@ -192,15 +192,11 @@ export default function PulseView() {
   };
 
   return (
-    <div className="h-screen w-screen text-white overflow-hidden relative"
-      style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, #1a0800 0%, #0a0a0a 60%, #050505 100%)' }}
-    >
-      <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.5), transparent)' }} />
-
-      {/* Auto-return countdown badge — centered at top so it doesn't overlap timer cards */}
+    <div className="h-screen w-screen text-white overflow-hidden relative" style={{ background: '#000' }}>
+      {/* Auto-return countdown badge */}
       {autoReturn > 0 && (
-        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-[#FF3F03]/40 text-[10px] font-bold text-[#FF3F03]"
-          style={{ background: 'rgba(255,63,3,0.12)' }}
+        <div className="absolute top-1 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-0.5 rounded-md text-[11px] font-bold text-[#FF3F03]"
+          style={{ background: '#3f3f3f' }}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#FF3F03] animate-pulse" />
           Returning in {autoReturnCountdown}s
@@ -212,16 +208,16 @@ export default function PulseView() {
         {/* Header — 72px */}
         <div className="flex gap-2 flex-shrink-0" style={{ height: '72px' }}>
           {[
-            { label: 'Interval', value: formatTime(intervalSecondsRemaining) },
-            { label: 'Program',  value: formatTimeRemaining(), large: isInfinity },
-            { label: 'Elapsed',  value: formatTime(elapsedSeconds), dot: true },
+            { label: 'Interval Remaining', value: formatTime(intervalSecondsRemaining) },
+            { label: 'Program Remaining',  value: formatTimeRemaining(), large: isInfinity },
+            { label: 'Elapsed Time',       value: formatTime(elapsedSeconds), dot: true },
           ].map(({ label, value, large, dot }) => (
-            <div key={label} className="flex-1 rounded-xl border border-zinc-700/40 px-2 flex flex-col items-center justify-center"
-              style={{ background: 'linear-gradient(180deg, rgba(30,30,30,0.9) 0%, rgba(15,15,15,0.9) 100%)' }}
+            <div key={label} className="flex-1 rounded-md flex flex-col items-center justify-center"
+              style={{ background: '#3f3f3f' }}
             >
-              <span className="text-[10px] uppercase tracking-widest text-zinc-500 leading-none mb-1">{label}</span>
-              <div className="font-mono font-bold text-[#FF3F03] leading-none flex items-center gap-1 whitespace-nowrap"
-                style={{ fontSize: large ? '32px' : '26px', textShadow: '0 0 20px rgba(255,63,3,0.4)' }}
+              <span className="text-[12px] uppercase tracking-widest text-zinc-300 leading-none mb-1 font-semibold">{label}</span>
+              <div className="font-bold text-[#FF3F03] leading-none flex items-center gap-1 whitespace-nowrap"
+                style={{ fontSize: large ? '32px' : '28px' }}
               >
                 {dot && <span className={`w-1.5 h-1.5 rounded-full ${wasRunning ? 'bg-[#FF3F03] animate-pulse' : 'bg-zinc-600'}`} />}
                 {value}
@@ -232,15 +228,13 @@ export default function PulseView() {
 
         {/* Centre — 388px */}
         <div className="flex gap-2 flex-shrink-0" style={{ height: '388px' }}>
-          <div className="w-2/3 rounded-xl border border-zinc-700/40 p-2"
-            style={{ background: 'linear-gradient(180deg, rgba(25,25,25,0.95) 0%, rgba(12,12,12,0.95) 100%)' }}
-          >
+          <div className="w-2/3 rounded-md p-2" style={{ background: '#000' }}>
             <HeartRateGauge heartRate={heartRate} />
           </div>
           <div className="w-1/3 flex flex-col gap-2">
             {/* Training Zone */}
-            <div className="flex-1 rounded-xl border border-zinc-700/40 p-2 flex flex-col items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(180deg, rgba(25,25,25,0.95) 0%, rgba(12,12,12,0.95) 100%)' }}>
-              <span className="text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Training Zone</span>
+            <div className="flex-1 rounded-md flex flex-col items-center justify-center overflow-hidden" style={{ background: '#3f3f3f' }}>
+              <span className="text-[12px] uppercase tracking-wider text-zinc-300 mb-2 font-semibold">Training Zone</span>
               {(() => {
                 const maxHR = 220 - profileAge;
                 const pct = (heartRate / maxHR) * 100;
@@ -259,8 +253,8 @@ export default function PulseView() {
               })()}
             </div>
             {/* % Max Heart Rate */}
-            <div className="flex-1 rounded-xl border border-zinc-700/40 p-2 flex flex-col items-center justify-center overflow-hidden" style={{ background: 'linear-gradient(180deg, rgba(25,25,25,0.95) 0%, rgba(12,12,12,0.95) 100%)' }}>
-              <span className="text-[10px] uppercase tracking-wider text-zinc-500 mb-2">% Max Heart Rate</span>
+            <div className="flex-1 rounded-md flex flex-col items-center justify-center overflow-hidden" style={{ background: '#3f3f3f' }}>
+              <span className="text-[12px] uppercase tracking-wider text-zinc-300 mb-2 font-semibold">% Max Heart Rate</span>
               <div className="font-black" style={{ color: getHeartRateColor(heartRate), fontSize: '40px' }}>
                 {Math.round((heartRate / (220 - profileAge)) * 100)}%
               </div>

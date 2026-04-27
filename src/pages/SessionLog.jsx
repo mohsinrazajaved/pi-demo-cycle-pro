@@ -92,39 +92,33 @@ export default function SessionLog() {
   };
 
   return (
-    <div className="h-screen w-screen text-white overflow-hidden relative"
-      style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, #1a0800 0%, #0d0d0d 60%, #080808 100%)' }}
-    >
-      <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.6), transparent)' }} />
-
+    <div className="h-screen w-screen text-white overflow-hidden relative" style={{ background: '#000' }}>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
       {/* Header — 56px */}
-      <div className="flex items-center gap-2 border-b border-zinc-800/50 flex-shrink-0" style={{ height: '56px', padding: '0 20px' }}>
+      <div className="flex items-center gap-3 flex-shrink-0" style={{ height: '56px', padding: '0 12px' }}>
         <Link
           to={createPageUrl('Launcher')}
           onClick={() => playTypewriterClick()}
-          className="w-8 h-8 rounded-xl border border-zinc-700/50 flex items-center justify-center transition-all hover:border-[#FF3F03]/40 active:scale-95"
-          style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}
+          className="w-10 h-10 rounded-md flex items-center justify-center transition-all active:scale-95"
+          style={{ background: '#3f3f3f' }}
         >
-          <ArrowLeft className="w-4 h-4 text-[#FF3F03]" />
+          <ArrowLeft className="text-[#FF3F03]" style={{ width: '18px', height: '18px' }} strokeWidth={2.5} />
         </Link>
         <div className="flex-1 min-w-0">
-          <h1 className="text-base font-bold tracking-tight leading-none">
+          <h1 className="text-lg font-black tracking-wide leading-none uppercase">
             Workout <span className="text-[#FF3F03]">History</span>
           </h1>
-          <p className="text-zinc-500 text-xs">{filteredWorkouts.length} workouts</p>
+          <p className="text-zinc-400 text-xs mt-1">{filteredWorkouts.length} workouts</p>
         </div>
         {/* Time Period Selector */}
-        <div className="flex gap-0.5 rounded-xl border border-zinc-700/50 p-0.5"
-          style={{ background: 'linear-gradient(145deg, #1a1a1a, #111)' }}
-        >
+        <div className="flex gap-0.5 rounded-md p-1" style={{ background: '#3f3f3f' }}>
           {TIME_PERIODS.map(p => (
             <button
               key={p.label}
               onClick={() => { playTypewriterClick(); setSelectedPeriod(p.label); }}
-              className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${selectedPeriod === p.label
+              className={`px-2.5 py-1 rounded text-xs font-bold transition-all ${selectedPeriod === p.label
                   ? 'bg-[#FF3F03] text-white'
-                  : 'text-zinc-400 hover:text-white'
+                  : 'text-zinc-300'
                 }`}
             >
               {p.label}
@@ -168,13 +162,10 @@ export default function SessionLog() {
                 { icon: Clock, value: formatTotalTime(totalDuration),  label: 'Time' },
                 { icon: Route, value: `${totalDistance.toFixed(1)} km`, label: 'Distance' },
               ].map(({ icon: Icon, value, label }) => (
-                <div key={label} className="rounded-xl p-2.5 border border-[#FF3F03]/20 relative overflow-hidden"
-                  style={{ background: 'linear-gradient(145deg, rgba(30,15,5,0.9), rgba(15,8,3,0.9))' }}
-                >
-                  <div className="absolute inset-0 opacity-10" style={{ background: 'radial-gradient(ellipse at 0% 0%, #FF3F03, transparent 70%)' }} />
-                  <Icon className="w-4 h-4 text-[#FF3F03] mb-1 relative z-10" />
-                  <p className="text-lg font-bold text-white leading-none relative z-10">{value}</p>
-                  <p className="text-[#FF3F03]/60 text-xs uppercase tracking-wider mt-0.5 relative z-10">{label}</p>
+                <div key={label} className="rounded-md p-3" style={{ background: '#3f3f3f' }}>
+                  <Icon className="w-5 h-5 text-[#FF3F03] mb-1" strokeWidth={2.5} />
+                  <p className="text-xl font-black text-white leading-none">{value}</p>
+                  <p className="text-zinc-300 text-xs uppercase tracking-wider mt-1 font-semibold">{label}</p>
                 </div>
               ))}
             </div>
@@ -192,7 +183,7 @@ export default function SessionLog() {
                   />
 
                   {/* Time per day */}
-                  <div className="rounded-xl p-3 border border-zinc-700/40" style={{ background: 'linear-gradient(145deg, #1a1a1a, #111)' }}>
+                  <div className="rounded-xl p-3 border border-zinc-700/40" style={{ background: '#0a0a0a' }}>
                     <h3 className="text-xs font-medium text-zinc-500 mb-2 uppercase tracking-widest">Time Riding Per Day</h3>
                     <div className="h-28">
                       <ResponsiveContainer width="100%" height="100%">
@@ -223,7 +214,7 @@ export default function SessionLog() {
                   </div>
 
                   {/* Avg watts per day */}
-                  <div className="rounded-xl p-3 border border-zinc-700/40" style={{ background: 'linear-gradient(145deg, #1a1a1a, #111)' }}>
+                  <div className="rounded-xl p-3 border border-zinc-700/40" style={{ background: '#0a0a0a' }}>
                     <h3 className="text-xs font-medium text-zinc-500 mb-2 uppercase tracking-widest">Avg Watts Per Day</h3>
                     <div className="h-28">
                       <ResponsiveContainer width="100%" height="100%">

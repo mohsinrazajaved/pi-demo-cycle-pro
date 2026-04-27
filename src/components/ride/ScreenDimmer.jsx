@@ -13,7 +13,7 @@ export default function ScreenDimmer({ brightness, setBrightness, onClose }) {
       />
       
       {/* Slider widget - always fully visible */}
-      <div className="relative bg-zinc-900 border border-zinc-700 rounded-xl p-6 w-[33rem] shadow-2xl z-50">
+      <div className="relative rounded-md p-6 w-[33rem] z-50" style={{ background: '#3f3f3f' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Sun className="w-5 h-5 text-[#FF3F03]" />
@@ -21,7 +21,7 @@ export default function ScreenDimmer({ brightness, setBrightness, onClose }) {
           </div>
           <button 
             onClick={() => { playTypewriterClick(); onClose(); }}
-            className="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center"
+            className="w-8 h-8 rounded-md flex items-center justify-center" style={{ background: '#000' }}
           >
             <X className="w-4 h-4 text-zinc-400" />
           </button>

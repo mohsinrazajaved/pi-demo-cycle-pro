@@ -42,31 +42,27 @@ export default function DurationSelect() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden text-white relative"
-      style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, #1a0800 0%, #0d0d0d 60%, #080808 100%)' }}
-    >
-      <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.6), transparent)' }} />
-
+    <div className="h-screen w-screen overflow-hidden text-white relative" style={{ background: '#000' }}>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
         {/* Header — 56px */}
-        <div className="flex items-center gap-3 flex-shrink-0" style={{ height: '56px', padding: '0 16px' }}>
+        <div className="flex items-center gap-3 flex-shrink-0" style={{ height: '56px', padding: '0 12px' }}>
           <button
             onClick={() => { playTypewriterClick(); navigate(createPageUrl('Launcher')); }}
-            className="w-10 h-10 rounded-xl border border-zinc-700/50 flex items-center justify-center transition-all hover:border-[#FF3F03]/40 active:scale-95 flex-shrink-0"
-            style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}
+            className="w-10 h-10 rounded-md flex items-center justify-center transition-all active:scale-95 flex-shrink-0"
+            style={{ background: '#3f3f3f' }}
           >
-            <ArrowLeft className="w-4 h-4 text-[#FF3F03]" />
+            <ArrowLeft className="text-[#FF3F03]" style={{ width: '20px', height: '20px' }} strokeWidth={2.5} />
           </button>
           <div className="flex items-center gap-2">
-            <Timer className="w-4 h-4 text-[#FF3F03]/60" />
-            <span className="text-xs uppercase tracking-widest text-zinc-500">Duration</span>
-            <span className="text-[#FF3F03]/40 text-xs">·</span>
-            <span className="text-base font-bold text-white">{programName}</span>
+            <Timer className="text-[#FF3F03]" style={{ width: '20px', height: '20px' }} strokeWidth={2.5} />
+            <span className="text-xs uppercase tracking-widest text-zinc-400 font-semibold">Duration</span>
+            <span className="text-zinc-600 text-xs">·</span>
+            <span className="text-lg font-black text-white uppercase tracking-wide">{programName}</span>
           </div>
         </div>
 
-        {/* Grid — 544px (remaining 600-56) with padding */}
-        <div className="grid grid-cols-5 grid-rows-3 gap-3 flex-shrink-0" style={{ height: '544px', padding: '0 16px 16px' }}>
+        {/* Grid — 544px */}
+        <div className="grid grid-cols-5 grid-rows-3 flex-shrink-0" style={{ height: '544px', padding: '0 12px 12px', gap: '10px' }}>
         {TIME_OPTIONS.map((opt) => {
           const isSelected = selectedTime === opt.value;
           const isInfinity = opt.value === Infinity;
@@ -74,24 +70,16 @@ export default function DurationSelect() {
             <button
               key={String(opt.value)}
               onClick={() => { playTypewriterClick(); handleSelect(opt.value); }}
-              className="relative rounded-xl border flex flex-col items-center justify-center font-bold transition-all active:scale-95 group overflow-hidden"
+              className="rounded-md flex flex-col items-center justify-center font-black transition-all active:scale-95"
               style={{
-                fontSize: isInfinity ? '2rem' : '1.5rem',
-                background: isSelected
-                  ? 'linear-gradient(145deg, #FF3F03, #cc3200)'
-                  : 'linear-gradient(145deg, #1e1e1e, #141414)',
-                border: isSelected ? '1px solid #FF3F03' : '1px solid rgba(255,255,255,0.06)',
-                boxShadow: isSelected ? '0 0 20px rgba(255,63,3,0.3)' : 'none',
-                color: isSelected ? '#fff' : '#d4d4d4',
+                background: isSelected ? '#FF3F03' : '#3f3f3f',
+                color: isSelected ? '#fff' : '#FF3F03',
+                fontSize: isInfinity ? '48px' : '36px',
               }}
             >
-              {!isSelected && (
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(255,63,3,0.12) 0%, transparent 70%)' }} />
-              )}
               {opt.label}
-              {!isInfinity && !isSelected && (
-                <span className="text-[10px] font-normal text-zinc-600 absolute bottom-1.5 tracking-wider">min</span>
+              {!isInfinity && (
+                <span className="font-semibold text-zinc-400 tracking-wider" style={{ fontSize: '13px', marginTop: '4px' }}>min</span>
               )}
             </button>
           );

@@ -68,44 +68,40 @@ export default function RiderSetup() {
   });
 
   const inputCls = (field) =>
-    `w-full h-9 border ${errors[field] ? 'border-red-500' : activeField === field ? 'border-[#FF3F03]' : 'border-zinc-700/50'} rounded-xl px-3 text-white text-base font-mono cursor-pointer focus:outline-none transition-colors`
-    + ` bg-zinc-900/60`;
+    `w-full h-10 rounded-md px-3 text-white text-base cursor-pointer focus:outline-none transition-colors ${
+      errors[field] ? 'ring-2 ring-red-500' : activeField === field ? 'ring-2 ring-[#FF3F03]' : ''
+    } bg-[#3f3f3f]`;
 
   const toggleCls = (active) =>
-    `h-9 rounded-xl font-bold text-sm border transition-all flex items-center justify-center px-3 ${active
-      ? 'bg-[#FF3F03] border-[#FF3F03] text-white'
-      : 'border-zinc-700/50 text-zinc-400 hover:text-white hover:border-zinc-600'
-    }` + (active ? '' : ' bg-zinc-900/60');
+    `h-10 rounded-md font-bold text-sm transition-all flex items-center justify-center px-3 ${
+      active ? 'bg-[#FF3F03] text-white' : 'bg-[#3f3f3f] text-zinc-300'
+    }`;
 
-  const lbl = 'text-xs uppercase tracking-wider text-zinc-500 mb-0.5 block';
+  const lbl = 'text-xs uppercase tracking-wider text-zinc-400 mb-1 block font-semibold';
 
   return (
-    <div className="h-screen w-screen text-white overflow-hidden relative"
-      style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, #1a0800 0%, #0d0d0d 60%, #080808 100%)' }}
-    >
-      <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.6), transparent)' }} />
-
+    <div className="h-screen w-screen text-white overflow-hidden relative" style={{ background: '#000' }}>
       <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
       {/* LEFT PANEL — form fields — 360px fixed */}
-      <div className="flex flex-col gap-2.5 p-5 overflow-hidden relative z-10" style={{ width: '360px', flexShrink: 0 }}>
+      <div className="flex flex-col gap-2.5 p-4 overflow-hidden relative z-10" style={{ width: '360px', flexShrink: 0, background: '#0a0a0a' }}>
 
         {/* Header */}
         <div className="flex gap-2 flex-shrink-0">
           <button
             onMouseDown={(e) => { e.preventDefault(); playTypewriterClick(); navigate(createPageUrl('Launcher')); }}
-            className="h-9 w-9 rounded-xl border border-zinc-700/50 flex items-center justify-center flex-shrink-0 transition-all hover:border-[#FF3F03]/40 active:scale-95"
-          style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}
+            className="h-10 w-10 rounded-md flex items-center justify-center flex-shrink-0 transition-all active:scale-95"
+            style={{ background: '#3f3f3f' }}
           >
-            <ArrowLeft className="w-4 h-4 text-[#FF3F03]" />
+            <ArrowLeft className="text-[#FF3F03]" style={{ width: '18px', height: '18px' }} strokeWidth={2.5} />
           </button>
           <div className="flex-1 flex items-center">
-            <h1 className="text-base font-bold text-[#FF3F03]">{editId ? 'Edit Profile' : 'New Profile'}</h1>
+            <h1 className="text-lg font-black text-[#FF3F03] uppercase tracking-wide">{editId ? 'Edit Profile' : 'New Profile'}</h1>
           </div>
           <button
             onMouseDown={(e) => { e.preventDefault(); playTypewriterClick(); handleSave(); }}
-            className="h-9 px-3 rounded-lg font-bold text-sm bg-[#FF3F03] hover:bg-[#cc3200] text-white flex items-center gap-1 flex-shrink-0"
+            className="h-10 px-4 rounded-md font-black text-sm bg-[#FF3F03] text-white flex items-center gap-1 flex-shrink-0"
           >
-            <Save className="w-3.5 h-3.5" /> Save
+            <Save className="w-4 h-4" /> Save
           </button>
         </div>
 
@@ -172,7 +168,7 @@ export default function RiderSetup() {
             ].map((opt) => (
               <button key={opt.value}
                 onMouseDown={(e) => { e.preventDefault(); playTypewriterClick(); set('activityLevel', opt.value); }}
-                className={`h-8 rounded-xl font-bold text-xs border transition-all ${form.activityLevel === opt.value ? 'bg-[#FF3F03] border-[#FF3F03] text-white' : 'bg-zinc-900/60 border-zinc-700/50 text-zinc-400 hover:text-white'}`}
+                className={`h-9 rounded-md font-bold text-xs transition-all ${form.activityLevel === opt.value ? 'bg-[#FF3F03] text-white' : 'bg-[#3f3f3f] text-zinc-300'}`}
               >{opt.label}</button>
             ))}
           </div>

@@ -30,8 +30,8 @@ export default function ChartCard({ data, dataKey, label, unit }) {
   );
 
   return (
-    <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800">
-      <h3 className="text-sm font-medium text-zinc-400 mb-4 uppercase tracking-wider">{label}</h3>
+    <div className="rounded-md p-4" style={{ background: '#0a0a0a' }}>
+      <h3 className="text-xs font-bold text-zinc-300 mb-3 uppercase tracking-widest">{label}</h3>
       <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -46,7 +46,7 @@ export default function ChartCard({ data, dataKey, label, unit }) {
             <Tooltip
               content={({ active, payload, label }) =>
                 active && payload?.length ? (
-                  <div className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 shadow-xl">
+                  <div className="rounded-md px-3 py-2" style={{ background: '#3f3f3f' }}>
                     <p className="text-zinc-400 text-xs mb-1">{label}</p>
                     <p className="text-white font-bold">
                       {payload.find(p => p.dataKey === 'value')?.value?.toFixed(1)} {unit}

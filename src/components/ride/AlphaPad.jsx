@@ -23,24 +23,27 @@ export default function AlphaPad({ value, onChange, onClose, onPrev, onNext }) {
     onChange(value.slice(0, -1));
   };
 
-  const btnClass = "rounded-lg flex items-center justify-center text-white font-bold border border-zinc-700/30 transition-all active:scale-95";
+  const btnClass = "rounded-md flex items-center justify-center text-white font-bold transition-all active:scale-95";
+  const keyBg = '#3f3f3f';
 
   return (
-    <div className="border border-zinc-700/40 rounded-xl p-2 shadow-2xl w-full" style={{ background: 'linear-gradient(180deg, #161616, #101010)' }}>
+    <div className="rounded-md p-2 w-full" style={{ background: '#0a0a0a' }}>
       {/* Number row */}
       <div className="flex justify-center gap-1 mb-1">
         {NUMBERS.map((k) => (
           <button
             key={k}
             onMouseDown={(e) => { e.preventDefault(); playTypewriterClick(); onChange(value + k); }}
-            className={`${btnClass} flex-1 h-8 text-sm`} style={{ background: 'linear-gradient(145deg, #252525, #1a1a1a)' }}
+            className={`${btnClass} flex-1 h-9 text-sm`}
+            style={{ background: keyBg }}
           >
             {k}
           </button>
         ))}
         <button
           onMouseDown={(e) => { e.preventDefault(); handleDel(); }}
-          className="bg-zinc-700 hover:bg-zinc-600 rounded-md w-10 h-8 flex items-center justify-center ml-1 flex-shrink-0"
+          className="rounded-md w-10 h-9 flex items-center justify-center ml-1 flex-shrink-0"
+          style={{ background: keyBg }}
         >
           <Delete className="w-4 h-4 text-[#FF3F03]" />
         </button>
@@ -53,8 +56,8 @@ export default function AlphaPad({ value, onChange, onClose, onPrev, onNext }) {
             <button
               key={k}
               onMouseDown={(e) => { e.preventDefault(); handleKey(k); }}
-              className={`${btnClass} flex-1 h-8 text-sm`}
-              style={{ background: 'linear-gradient(145deg, #252525, #1a1a1a)', maxWidth: '10%' }}
+              className={`${btnClass} flex-1 h-9 text-sm`}
+              style={{ background: keyBg, maxWidth: '10%' }}
             >
               {caps ? k.toUpperCase() : k.toLowerCase()}
             </button>
@@ -66,31 +69,36 @@ export default function AlphaPad({ value, onChange, onClose, onPrev, onNext }) {
       <div className="flex justify-center gap-1 mt-1">
         <button
           onMouseDown={(e) => { e.preventDefault(); playTypewriterClick(); setCaps(!caps); }}
-          className={`rounded-md px-3 h-8 text-xs font-bold flex-shrink-0 ${caps ? 'bg-[#FF3F03] text-white' : 'bg-[#515454] text-zinc-300'}`}
+          className={`rounded-md px-3 h-9 text-xs font-black flex-shrink-0 ${caps ? 'bg-[#FF3F03] text-white' : 'text-zinc-300'}`}
+          style={caps ? {} : { background: keyBg }}
         >
           CAPS
         </button>
         <button
           onMouseDown={(e) => { e.preventDefault(); playTypewriterClick(); onChange(value + ' '); }}
-          className="bg-[#515454] hover:bg-[#616464] rounded-md flex-1 h-8 text-white text-xs"
+          className="rounded-md flex-1 h-9 text-white text-xs"
+          style={{ background: keyBg }}
         >
           SPACE
         </button>
         <button
           onMouseDown={(e) => { e.preventDefault(); playTypewriterClick(); onChange(value + '.'); }}
-          className="bg-[#515454] hover:bg-[#616464] rounded-md px-3 h-8 text-white font-bold text-xs flex-shrink-0"
+          className="rounded-md px-3 h-9 text-white font-bold text-xs flex-shrink-0"
+          style={{ background: keyBg }}
         >
           .
         </button>
         <button
           onMouseDown={(e) => { e.preventDefault(); onPrev?.(); }}
-          className="bg-[#515454] hover:bg-[#616464] rounded-md px-2 h-8 flex items-center justify-center flex-shrink-0"
+          className="rounded-md px-2 h-9 flex items-center justify-center flex-shrink-0"
+          style={{ background: keyBg }}
         >
           <ChevronUp className="w-4 h-4 text-[#FF3F03]" />
         </button>
         <button
           onMouseDown={(e) => { e.preventDefault(); onNext?.(); }}
-          className="bg-[#515454] hover:bg-[#616464] rounded-md px-2 h-8 flex items-center justify-center flex-shrink-0"
+          className="rounded-md px-2 h-9 flex items-center justify-center flex-shrink-0"
+          style={{ background: keyBg }}
         >
           <ChevronDown className="w-4 h-4 text-[#FF3F03]" />
         </button>

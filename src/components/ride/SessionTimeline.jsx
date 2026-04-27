@@ -186,10 +186,10 @@ export default function SessionTimeline({ programData, currentPosition, resistan
   const imageVisible = !isComplete && imageStartDisplay < TOTAL_SLOTS && imageStartDisplay + IMAGE_SLOTS > 0;
 
   return (
-    <div className="w-full h-full bg-zinc-900/80 rounded-lg border border-zinc-800 p-2 flex flex-col">
+    <div className="w-full h-full rounded-md p-2 flex flex-col" style={{ background: '#000' }}>
       <div className="flex justify-between items-center mb-1">
-        <span className="text-[10px] uppercase tracking-wider text-zinc-500">Program{programLabel ? ` — ${programLabel}` : ''}</span>
-        <span className="text-[10px] text-[#FF3F03]">Level {resistance}/{MAX_RESISTANCE}</span>
+        <span className="text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">Program{programLabel ? ` — ${programLabel}` : ''}</span>
+        <span className="text-[11px] text-[#FF3F03] font-bold">Level {resistance}/{MAX_RESISTANCE}</span>
       </div>
 
       <div className="flex-1 flex items-end gap-[1px] relative overflow-hidden">
@@ -214,8 +214,7 @@ export default function SessionTimeline({ programData, currentPosition, resistan
                   className="w-full rounded-t-sm"
                   style={{
                     height: `${height}%`,
-                    backgroundColor: isActive ? '#FF3F03' : '#444',
-                    boxShadow: isActive ? '0 0 8px #FF3F03' : 'none',
+                    backgroundColor: isActive ? '#FF3F03' : '#3f3f3f',
                     transition: 'none',
                   }}
                 />

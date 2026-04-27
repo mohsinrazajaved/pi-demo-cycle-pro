@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Power, User, History, Volume2 } from 'lucide-react';
+import { Power, User, User as UserIcon, History, Volume2 } from 'lucide-react';
 import { playTypewriterClick } from '../components/ride/audioCues';
 import { dataStore } from '@/services/localStore';
 import BootSplash from '../components/ride/BootSplash';
@@ -31,7 +31,7 @@ function MiniChart({ levels }) {
         const h = (level / max) * 28;
         return (
           <rect key={i} x={i * 11} y={28 - h} width="10" height={h}
-            fill="rgba(255,63,3,0.25)" rx="1.5" />
+            fill="#5a5a5a" rx="1" />
         );
       })}
     </svg>
@@ -91,11 +91,8 @@ export default function Launcher() {
 
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col text-white relative"
-      style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, #1a0800 0%, #0d0d0d 60%, #080808 100%)' }}
+      style={{ background: '#000' }}
     >
-      {/* Top accent line */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FF3F03]/60 to-transparent" />
-
       {showSplash && <BootSplash onComplete={handleSplashComplete} />}
 
       {showVolumeSlider && (
@@ -114,71 +111,66 @@ export default function Launcher() {
         />
       )}
 
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: '8px', gap: '4px' }}>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: '10px', gap: '8px' }}>
 
-        {/* Top bar — 48px */}
-        <div className="flex gap-2 flex-shrink-0" style={{ height: '48px' }}>
-          <div className="flex-1 flex items-center gap-2.5 px-3 rounded-xl border border-zinc-700/50 bg-zinc-900 min-w-0">
-            <div className="w-9 h-9 rounded-full bg-[#FF3F03]/20 border border-[#FF3F03]/40 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-bold text-[#FF3F03]">{initials}</span>
-            </div>
+        {/* Top bar — 80px: profile name on left, three icon buttons on right */}
+        <div className="flex items-center flex-shrink-0" style={{ height: '80px', gap: '24px' }}>
+          {/* Profile section — flat, no card */}
+          <div className="flex-1 flex items-center gap-3 min-w-0 pl-2">
+            <UserIcon className="w-5 h-5 text-[#FF3F03] flex-shrink-0" strokeWidth={2.5} />
             <div className="min-w-0 flex-1">
-              <div className="text-[10px] uppercase tracking-widest text-zinc-500 leading-none">Rider</div>
-              <div className="text-lg font-bold text-white truncate leading-tight">
+              <div className="text-[11px] uppercase tracking-widest text-zinc-500 leading-none mb-1">Profile Name</div>
+              <div className="text-2xl font-black text-white truncate uppercase tracking-wide">
                 {activeProfile ? activeProfile.name : 'No Profile'}
               </div>
             </div>
           </div>
 
+          {/* Action icons — orange, no boxes */}
           {[
-            { icon: Volume2,  action: () => setShowVolumeSlider(true),  label: 'Volume' },
-            { icon: History,  action: () => navigate(createPageUrl('SessionLog')), label: 'History' },
-            { icon: User,     action: () => setShowChangeProfile(true), label: 'Profile' },
-          ].map(({ icon: Icon, action, label }) => (
-            <button key={label}
+            { icon: Volume2, action: () => setShowVolumeSlider(true) },
+            { icon: History, action: () => navigate(createPageUrl('SessionLog')) },
+            { icon: User,    action: () => setShowChangeProfile(true) },
+          ].map(({ icon: Icon, action }, i) => (
+            <button key={i}
               onClick={() => { playTypewriterClick(); action(); }}
-              className="flex flex-col items-center justify-center gap-0.5 rounded-xl border border-zinc-700/50 bg-zinc-900 hover:bg-zinc-800/80 hover:border-[#FF3F03]/30 transition-all active:scale-95 flex-shrink-0"
-              style={{ width: '56px' }}
+              className="flex items-center justify-center transition-all active:scale-90 flex-shrink-0"
+              style={{ width: '48px', height: '48px' }}
             >
-              <Icon className="w-5 h-5 text-[#FF3F03]" />
-              <span className="text-[9px] text-zinc-500 uppercase tracking-wider">{label}</span>
+              <Icon className="text-[#FF3F03]" style={{ width: '32px', height: '32px' }} strokeWidth={2.5} />
             </button>
           ))}
         </div>
 
-        {/* Program grid — 234+8+234 = 476 */}
-        <div className="grid grid-cols-4 gap-2" style={{ gridTemplateRows: '234px 234px' }}>
+        {/* Program grid — 222+8+222 = 452 */}
+        <div className="grid grid-cols-4 gap-2" style={{ gridTemplateRows: '222px 222px' }}>
           {programs.map((program) => (
             <button key={program.id}
               onClick={() => handleProgramSelect(program)}
-              className="relative rounded-xl overflow-hidden flex flex-col items-center justify-center transition-all active:scale-[0.97] group"
-              style={{
-                background: 'linear-gradient(145deg, #1e1e1e 0%, #141414 100%)',
-                border: '1px solid rgba(255,255,255,0.06)',
-                boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
-              }}
+              className="relative rounded-lg overflow-hidden flex flex-col items-center justify-center transition-all active:scale-[0.97]"
+              style={{ background: '#3f3f3f' }}
             >
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(255,63,3,0.12) 0%, transparent 70%)' }} />
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FF3F03]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="relative z-10 font-black text-[#FF3F03] text-center leading-tight px-2"
+                style={{ fontSize: '24px', marginBottom: '32px' }}
+              >
+                {program.name}
+              </span>
 
-              <span className="relative z-10 font-bold text-base text-white text-center leading-tight px-2 mb-2">{program.name}</span>
-
-              <div className="absolute bottom-0 left-0 right-0 px-3 pb-2" style={{ height: '40px' }}>
+              <div className="absolute bottom-0 left-0 right-0 px-3 pb-2" style={{ height: '36px' }}>
                 <MiniChart levels={PROGRAM_CHARTS[program.id] || [3,3,3,3,3,3,3,3,3,3]} />
               </div>
             </button>
           ))}
         </div>
 
-        {/* Power Off — 40px */}
+        {/* Power Off — 48px */}
         <button
           onClick={() => { playTypewriterClick(); setIsPoweredOff(true); }}
-          className="flex-shrink-0 flex items-center justify-center gap-2 rounded-xl border border-red-900/40 bg-red-950/30 hover:bg-red-900/40 transition-all active:scale-[0.98]"
-          style={{ height: '40px' }}
+          className="flex-shrink-0 flex items-center justify-center gap-3 rounded-lg transition-all active:scale-[0.98]"
+          style={{ height: '48px', background: '#1a1a1a' }}
         >
-          <Power className="w-4 h-4 text-red-500" />
-          <span className="text-sm font-bold text-red-500 uppercase tracking-wider">Power Off</span>
+          <Power className="text-red-500" style={{ width: '22px', height: '22px' }} strokeWidth={2.5} />
+          <span className="font-black text-red-500 tracking-wide" style={{ fontSize: '20px' }}>Power Off</span>
         </button>
 
       </div>

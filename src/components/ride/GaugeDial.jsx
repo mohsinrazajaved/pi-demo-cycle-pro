@@ -36,10 +36,9 @@ export default function GaugeDial({ value, max, label }) {
   }
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center rounded-xl border border-zinc-700/40 overflow-hidden"
-      style={{ background: 'linear-gradient(180deg, rgba(22,22,22,0.95) 0%, rgba(10,10,10,0.95) 100%)' }}
+    <div className="relative w-full h-full flex flex-col items-center justify-center rounded-md overflow-hidden"
+      style={{ background: '#000' }}
     >
-      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(ellipse at 50% 100%, #FF3F03 0%, transparent 60%)' }} />
       <svg
         viewBox="-14 -14 128 76"
         className="flex-1 w-full min-h-0 relative z-10"

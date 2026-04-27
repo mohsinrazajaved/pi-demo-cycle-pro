@@ -363,11 +363,8 @@ export default function RideDisplay() {
   const isDimmed = brightness < 100;
 
   return (
-    <div className="h-screen w-screen overflow-hidden" style={{ background: 'radial-gradient(ellipse 140% 80% at 50% -10%, #1a0800 0%, #0a0a0a 55%, #050505 100%)' }}>
+    <div className="h-screen w-screen overflow-hidden" style={{ background: '#000' }}>
       <div className="relative text-white overflow-hidden" style={{ width: '100%', height: '100%' }}>
-        {/* Top accent line */}
-        <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,63,3,0.5), transparent)' }} />
-
         <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }} onClick={isDimmed && !showBrightnessSlider ? () => setBrightness(100) : undefined}>
           {isDimmed && !showBrightnessSlider && (
             <div className="absolute inset-0 z-40 cursor-pointer bg-black pointer-events-auto" style={{ opacity: (100 - brightness) / 100 }} />
@@ -376,18 +373,18 @@ export default function RideDisplay() {
           {/* Top Section — 258px: timers 90px + calories/controls 168px */}
           <div style={{ height: '258px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
             {/* Timer row — 90px */}
-            <div className="flex gap-2" style={{ height: '90px', flexShrink: 0, padding: '10px 10px 0 10px' }}>
+            <div className="flex gap-2" style={{ height: '90px', flexShrink: 0, padding: '8px 8px 0 8px' }}>
               {[
-                { label: 'Interval', value: formatTime(intervalSecondsRemaining) },
-                { label: 'Program', value: isInfinity ? '∞' : formatTimeRemaining() },
-                { label: 'Elapsed', value: formatTime(elapsedSeconds), dot: true },
+                { label: 'Interval Remaining', value: formatTime(intervalSecondsRemaining) },
+                { label: 'Program Remaining',  value: isInfinity ? '∞' : formatTimeRemaining() },
+                { label: 'Elapsed Time',        value: formatTime(elapsedSeconds), dot: true },
               ].map(({ label, value, dot }) => (
-                <div key={label} className="flex-1 rounded-xl border border-zinc-700/40 flex flex-col items-center justify-center overflow-hidden"
-                  style={{ background: 'linear-gradient(180deg, rgba(30,30,30,0.9) 0%, rgba(15,15,15,0.9) 100%)' }}
+                <div key={label} className="flex-1 rounded-md flex flex-col items-center justify-center overflow-hidden"
+                  style={{ background: '#3f3f3f' }}
                 >
-                  <span style={{ fontSize: '11px' }} className="uppercase tracking-widest text-zinc-500 leading-none mb-1 flex-shrink-0">{label}</span>
-                  <div className="font-mono font-bold text-[#FF3F03] leading-none flex items-center gap-1 whitespace-nowrap"
-                    style={{ fontSize: '30px', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}
+                  <span style={{ fontSize: '12px' }} className="uppercase tracking-widest text-zinc-300 leading-none mb-1 flex-shrink-0 font-semibold">{label}</span>
+                  <div className="font-bold text-[#FF3F03] leading-none flex items-center gap-1 whitespace-nowrap"
+                    style={{ fontSize: '36px' }}
                   >
                     {dot && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isRunning && !isPaused ? 'bg-[#FF3F03] animate-pulse' : isPaused ? 'bg-amber-400' : 'bg-zinc-600'}`} />}
                     {value}
@@ -397,22 +394,21 @@ export default function RideDisplay() {
             </div>
 
             {/* Calories + controls row — 168px */}
-            <div style={{ height: '168px', flexShrink: 0, display: 'flex', padding: '8px 10px' }}>
+            <div style={{ height: '168px', flexShrink: 0, display: 'flex', padding: '6px 8px' }}>
               {/* Calories — left half */}
               <div style={{ width: '50%', paddingRight: '4px' }}>
-                <div className="w-full h-full rounded-xl border border-zinc-700/40 flex flex-col items-center justify-center relative overflow-hidden"
-                  style={{ background: 'linear-gradient(180deg, rgba(30,15,5,0.95) 0%, rgba(12,8,4,0.95) 100%)' }}
+                <div className="w-full h-full rounded-md flex flex-col items-center justify-center"
+                  style={{ background: '#000' }}
                 >
-                  <div className="absolute inset-0 opacity-20" style={{ background: 'radial-gradient(ellipse at 50% 100%, #FF3F03 0%, transparent 70%)' }} />
-                  <div className="relative z-10 text-center w-full px-2 flex flex-col items-center justify-center">
-                    <div className="flex items-center justify-center gap-1 flex-shrink-0" style={{ marginBottom: '2px' }}>
-                      <Flame className="text-[#FF3F03] animate-pulse" style={{ width: '18px', height: '18px' }} />
-                      <span style={{ fontSize: '13px' }} className="uppercase tracking-widest text-zinc-400">Calories</span>
+                  <div className="text-center w-full px-2 flex flex-col items-center justify-center">
+                    <div className="flex items-center justify-center gap-2 flex-shrink-0" style={{ marginBottom: '4px' }}>
+                      <Flame className="text-[#FF3F03]" style={{ width: '22px', height: '22px' }} strokeWidth={2.5} />
+                      <span style={{ fontSize: '20px' }} className="uppercase tracking-wider text-zinc-300 font-semibold">Calories</span>
                     </div>
-                    <div className="font-black leading-none text-[#FF3F03] whitespace-nowrap" style={{ fontSize: '72px', textShadow: '0 0 40px rgba(255,63,3,0.6)' }}>
+                    <div className="font-black leading-none text-[#FF3F03] whitespace-nowrap" style={{ fontSize: '78px' }}>
                       {Math.floor(stats.calories)}
                     </div>
-                    <span style={{ fontSize: '13px', marginTop: '2px' }} className="text-zinc-500 uppercase tracking-wider flex-shrink-0">kcal</span>
+                    <span style={{ fontSize: '16px', marginTop: '4px' }} className="text-zinc-400 lowercase">kcal</span>
                   </div>
                 </div>
               </div>
@@ -422,15 +418,15 @@ export default function RideDisplay() {
                 <div className="grid grid-cols-2 h-full" style={{ gridTemplateRows: 'repeat(3, 1fr)', gap: '6px' }}>
                   {!isRunning || isPaused ? (
                     <button onClick={() => { playTypewriterClick(); primeAudio(); setIsRunning(true); setIsPaused(false); }}
-                      className="rounded-xl border border-zinc-700/40 hover:border-[#FF3F03]/40 font-bold flex items-center justify-center transition-all active:scale-95"
-                      style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}>
-                      <Play style={{ width: '22px', height: '22px' }} className="text-[#FF3F03]" />
+                      className="rounded-md font-bold flex items-center justify-center transition-all active:scale-95"
+                      style={{ background: '#3f3f3f' }}>
+                      <Play style={{ width: '24px', height: '24px' }} className="text-[#FF3F03]" strokeWidth={2.5} />
                     </button>
                   ) : (
                     <button onClick={() => { playTypewriterClick(); setIsPaused(true); }}
-                      className="rounded-xl border border-zinc-700/40 hover:border-[#FF3F03]/40 font-bold flex items-center justify-center transition-all active:scale-95"
-                      style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}>
-                      <Pause style={{ width: '22px', height: '22px' }} className="text-[#FF3F03]" />
+                      className="rounded-md font-bold flex items-center justify-center transition-all active:scale-95"
+                      style={{ background: '#3f3f3f' }}>
+                      <Pause style={{ width: '24px', height: '24px' }} className="text-[#FF3F03]" strokeWidth={2.5} />
                     </button>
                   )}
                   {[
@@ -439,9 +435,9 @@ export default function RideDisplay() {
                     { icon: Volume2, action: () => setShowVolumeSlider(true) },
                   ].map(({ icon: Icon, action }) => (
                     <button key={Icon.displayName} onClick={() => { playTypewriterClick(); action(); }}
-                      className="rounded-xl border border-zinc-700/40 hover:border-[#FF3F03]/40 font-bold flex items-center justify-center transition-all active:scale-95"
-                      style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}>
-                      <Icon style={{ width: '22px', height: '22px' }} className="text-[#FF3F03]" />
+                      className="rounded-md font-bold flex items-center justify-center transition-all active:scale-95"
+                      style={{ background: '#3f3f3f' }}>
+                      <Icon style={{ width: '24px', height: '24px' }} className="text-[#FF3F03]" strokeWidth={2.5} />
                     </button>
                   ))}
                   {[
@@ -449,9 +445,9 @@ export default function RideDisplay() {
                     { label: 'Cool Down', action: handleCoolDown },
                   ].map(({ label, action }) => (
                     <button key={label} onClick={() => { playTypewriterClick(); action(); }}
-                      className="rounded-xl border border-zinc-700/40 hover:border-[#FF3F03]/40 font-bold flex items-center justify-center transition-all active:scale-95"
-                      style={{ background: 'linear-gradient(145deg, #1e1e1e, #141414)' }}>
-                      <span style={{ fontSize: '14px' }} className="font-bold text-[#FF3F03] whitespace-nowrap tracking-wide">{label}</span>
+                      className="rounded-md flex items-center justify-center transition-all active:scale-95"
+                      style={{ background: '#3f3f3f' }}>
+                      <span style={{ fontSize: '18px' }} className="font-black text-[#FF3F03] whitespace-nowrap">{label}</span>
                     </button>
                   ))}
                 </div>
@@ -472,16 +468,15 @@ export default function RideDisplay() {
           </div>
 
           {/* Bottom Section — 240px: three gauges/distance side-by-side */}
-          <div style={{ height: '240px', flexShrink: 0, display: 'flex', padding: '0 10px 10px 10px', gap: '8px', overflow: 'hidden' }}>
+          <div style={{ height: '240px', flexShrink: 0, display: 'flex', padding: '0 8px 8px 8px', gap: '8px', overflow: 'hidden' }}>
             <div style={{ width: '33%' }}>
               <GaugeDial value={stats.cadence} max={150} label="RPM" unit="rpm" />
             </div>
-            <div className="flex-1 flex flex-col items-center justify-center rounded-xl border border-zinc-700/40 relative overflow-hidden"
-              style={{ background: 'linear-gradient(180deg, rgba(20,20,20,0.9) 0%, rgba(10,10,10,0.9) 100%)' }}
+            <div className="flex-1 flex flex-col items-center justify-center rounded-md"
+              style={{ background: '#000' }}
             >
-              <div className="absolute inset-0 opacity-10" style={{ background: 'radial-gradient(ellipse at 50% 100%, #FF3F03 0%, transparent 60%)' }} />
-              <div className="font-bold text-[#FF3F03] relative z-10 whitespace-nowrap leading-none" style={{ fontSize: '72px', textShadow: '0 0 30px rgba(255,63,3,0.4)' }}>{stats.distance.toFixed(2)}</div>
-              <span style={{ fontSize: '12px', marginTop: '10px' }} className="uppercase tracking-widest text-zinc-500 relative z-10">KM</span>
+              <div className="font-bold text-[#FF3F03] whitespace-nowrap leading-none" style={{ fontSize: '78px' }}>{stats.distance.toFixed(2)}</div>
+              <span style={{ fontSize: '14px', marginTop: '10px' }} className="uppercase tracking-widest text-zinc-400">KM</span>
             </div>
             <div style={{ width: '33%' }}>
               <GaugeDial value={stats.power} max={300} label="WATTS" unit="watts" />

@@ -15,3 +15,15 @@ export const INTERVAL_DURATION_SEC = 120;
 // Default workout length when no `?duration=` param is provided
 // (e.g., entering RideDisplay directly without going through DurationSelect).
 export const DEFAULT_TARGET_DURATION_SEC = 30 * 60; // 30 minutes
+
+// Default app volume (0–100). Used by every sound effect and the boot splash
+// audio. Persisted in localStorage under "bikeVolume". Use getVolume() so a
+// stored 0 / NaN / negative never silences the system on first boot.
+export const DEFAULT_VOLUME_PERCENT = 100;
+
+export function getVolume() {
+  const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('bikeVolume') : null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0 || n > 100) return DEFAULT_VOLUME_PERCENT;
+  return n;
+}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { getVolume } from '@/config';
 
 // Served from public/ — works fully offline, no internet required.
 const LOGO_URL  = '/logo.png';
@@ -17,7 +18,7 @@ export default function BootSplash({ onComplete }) {
     // Try to play the boot sound. Browsers block autoplay until the page has
     // had a user gesture; if blocked, we silently fall back to a silent splash.
     const audio = new Audio(SOUND_URL);
-    audio.volume = Number(localStorage.getItem('bikeVolume') ?? 100) / 100;
+    audio.volume = getVolume() / 100;
     audio.play().catch(() => { /* autoplay blocked — silent splash */ });
     audioRef.current = audio;
 

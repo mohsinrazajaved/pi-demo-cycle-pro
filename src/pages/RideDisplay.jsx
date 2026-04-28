@@ -11,7 +11,7 @@ import ScreenDimmer from '../components/ride/ScreenDimmer';
 import AudioControl from '../components/ride/AudioControl';
 import PromptDialog from '../components/ride/PromptDialog';
 import { generateSessionPattern } from '../components/ride/sessionPatterns';
-import { INTERVAL_DURATION_SEC, PULSE_VIEW_DURATION_SEC } from '@/config';
+import { INTERVAL_DURATION_SEC, PULSE_VIEW_DURATION_SEC, getVolume } from '@/config';
 
 const INTERVAL_DURATION = INTERVAL_DURATION_SEC;
 
@@ -61,7 +61,7 @@ export default function RideDisplay() {
   const [simPower, setSimPower] = useState(140);         // demo: 140 W
   const [brightness, setBrightness] = useState(100);
   const [showBrightnessSlider, setShowBrightnessSlider] = useState(false);
-  const [volume, setVolume] = useState(() => Number(localStorage.getItem('bikeVolume') ?? 100));
+  const [volume, setVolume] = useState(getVolume);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
 
   const handleVolumeChange = (val) => {

@@ -1,8 +1,10 @@
+import { getVolume } from '@/config';
+
 export function playTypewriterClick() {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     const ctx = new AudioCtx();
-    const vol = Number(localStorage.getItem('bikeVolume') ?? 100) / 100;
+    const vol = getVolume() / 100;
     const bufferSize = Math.floor(ctx.sampleRate * 0.04);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);

@@ -7,6 +7,7 @@ import { dataStore } from '@/services/localStore';
 import BootSplash from '../components/ride/BootSplash';
 import RiderPicker from '../components/ride/RiderPicker';
 import AudioControl from '../components/ride/AudioControl';
+import { getVolume } from '@/config';
 
 // Module-level flag: splash shows once per app session (resets on page reload).
 // Navigating back to Home from another page does NOT trigger it again.
@@ -45,7 +46,7 @@ export default function Launcher() {
   const [showSplash, setShowSplash] = useState(!splashShownThisSession); // only on first app load
   const [showChangeProfile, setShowChangeProfile] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
-  const [volume, setVolume] = useState(() => Number(localStorage.getItem('bikeVolume') ?? 100));
+  const [volume, setVolume] = useState(getVolume);
 
   const handleVolumeChange = (val) => {
     setVolume(val);

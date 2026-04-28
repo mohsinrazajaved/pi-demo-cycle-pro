@@ -18,6 +18,9 @@ export default function BootSplash({ onComplete }) {
     // Try to play the boot sound. Browsers block autoplay until the page has
     // had a user gesture; if blocked, we silently fall back to a silent splash.
     const audio = new Audio(SOUND_URL);
+    // HTML5 audio.volume is 0.0–1.0 (1.0 = MAX). getVolume() returns 0–100,
+    // so dividing by 100 maps to the API's 0–1 range. With the default 100,
+    // this evaluates to 1.0 = full volume.
     audio.volume = getVolume() / 100;
     audio.play().catch(() => { /* autoplay blocked — silent splash */ });
     audioRef.current = audio;

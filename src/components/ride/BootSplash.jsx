@@ -15,15 +15,18 @@ export default function BootSplash({ onComplete }) {
   const audioRef = useRef(null);
 
   useEffect(() => {
-    // Try to play the boot sound. Browsers block autoplay until the page has
-    // had a user gesture; if blocked, we silently fall back to a silent splash.
-    const audio = new Audio(SOUND_URL);
-    // HTML5 audio.volume is 0.0–1.0 (1.0 = MAX). getVolume() returns 0–100,
-    // so dividing by 100 maps to the API's 0–1 range. With the default 100,
-    // this evaluates to 1.0 = full volume.
-    audio.volume = getVolume() / 100;
-    audio.play().catch(() => { /* autoplay blocked — silent splash */ });
-    audioRef.current = audio;
+    // Set volume on the DOM-attached <audio> element. autoPlay attribute
+    // handles the play() call — more reliable than `new Audio()` since the
+    // element is mounted in the document and respects standard playback rules.
+    if (audioRef.current) {
+      // HTML5 audio.volume is 0.0–1.0 (1.0 = MAX). getVolume() returns 0–100.
+      audioRef.current.volume = getVolume() / 100;
+      // Manually call play() too, so we surface any autoplay-block error in
+      // the console for debugging.
+      audioRef.current.play().catch((err) => {
+        console.warn('[BootSplash] autoplay blocked:', err.message);
+      });
+    }
 
     const fadeTimer     = setTimeout(() => setFading(true), SPLASH_DURATION_MS - FADE_DURATION_MS);
     const completeTimer = setTimeout(() => onComplete(),     SPLASH_DURATION_MS);
@@ -31,7 +34,9 @@ export default function BootSplash({ onComplete }) {
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(completeTimer);
-      try { audio.pause(); } catch (_) { /* noop */ }
+      if (audioRef.current) {
+        try { audioRef.current.pause(); } catch (_) { /* noop */ }
+      }
     };
   }, [onComplete]);
 
@@ -45,6 +50,15 @@ export default function BootSplash({ onComplete }) {
         pointerEvents: fading ? 'none' : 'auto',
       }}
     >
+      {/* DOM-attached audio with autoPlay — most reliable cross-browser path */}
+      <audio
+        ref={audioRef}
+        src={SOUND_URL}
+        autoPlay
+        preload="auto"
+        onError={(e) => console.warn('[BootSplash] audio error', e?.target?.error)}
+        onPlay={() => console.log('[BootSplash] audio playing')}
+      />
       <img
         src={LOGO_URL}
         alt="GamerCycle Logo"

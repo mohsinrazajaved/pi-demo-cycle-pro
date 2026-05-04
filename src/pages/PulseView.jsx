@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import SessionTimeline from '../components/ride/SessionTimeline';
@@ -96,13 +96,17 @@ export default function PulseView() {
     });
   }, []);
 
-  // Auto-return to RideDisplay after N seconds (triggered by push button)
+  // Auto-return to RideDisplay after N seconds (triggered by push button).
+  // We call `handleBackToBike` through a ref so the timer always uses the
+  // *latest* version of the closure — i.e., current elapsedSeconds, not the
+  // value from when the effect was first set up.
+  const handleBackToBikeRef = useRef(null);
   const [autoReturnCountdown, setAutoReturnCountdown] = useState(autoReturn);
   useEffect(() => {
     if (!autoReturn) return;
     const timer = setInterval(() => {
       setAutoReturnCountdown(prev => {
-        if (prev <= 1) { clearInterval(timer); handleBackToBike(); return 0; }
+        if (prev <= 1) { clearInterval(timer); handleBackToBikeRef.current?.(); return 0; }
         return prev - 1;
       });
     }, 1000);
@@ -201,6 +205,11 @@ export default function PulseView() {
       `?program=${program}&targetEndTime=${passableTargetEndTime}&elapsed=${elapsedSeconds}&intervalRemaining=${intervalSecondsRemaining}&programPosition=${programPosition}&running=${wasRunning ? '1' : '0'}&resistance=${resistance}&manual=${isManual ? '1' : '0'}&infinity=${isInfinity ? '1' : '0'}`
     );
   };
+
+  // Keep the ref pointing at the latest handleBackToBike, so the autoReturn
+  // setInterval (which captured a stale closure on mount) always calls the
+  // current version with up-to-date elapsedSeconds / programPosition / etc.
+  useEffect(() => { handleBackToBikeRef.current = handleBackToBike; });
 
   return (
     <div className="h-screen w-screen text-white overflow-hidden relative" style={{ background: '#000' }}>

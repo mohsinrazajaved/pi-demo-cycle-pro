@@ -28,6 +28,7 @@ import asyncio
 import json
 import os
 import socket
+import subprocess
 import RPi.GPIO as GPIO
 import websockets
 import time
@@ -115,12 +116,40 @@ async def poll_button():
         prev = current
         await asyncio.sleep(0.01)  # poll at 100 Hz
 
+# ── Screen power control (DPMS) ──────────────────────────────────────────────
+# When the React app sends {"type": "screen_off"} we tell X11 to power down
+# the HDMI display via DPMS. The Waveshare LCD reads no signal and (on most
+# revisions) drops the backlight. Any touch on the screen auto-wakes via X's
+# built-in DPMS wake-on-input behaviour.
+def screen_power(on: bool) -> None:
+    cmd = ['xset', 'dpms', 'force', 'on' if on else 'off']
+    try:
+        subprocess.Popen(
+            cmd,
+            env={**os.environ, 'DISPLAY': os.environ.get('DISPLAY', ':0')},
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    except Exception as e:
+        print(f"[!] screen_power({on}) failed: {e}")
+
 # ── WebSocket server ──────────────────────────────────────────────────────────
 async def handler(websocket):
     connected_clients.add(websocket)
     print(f"[+] Client connected ({len(connected_clients)} total)")
     try:
-        await websocket.wait_closed()
+        async for raw in websocket:
+            try:
+                msg = json.loads(raw)
+                if msg.get('type') == 'screen_off':
+                    print('[*] screen_off requested')
+                    screen_power(False)
+                elif msg.get('type') == 'screen_on':
+                    print('[*] screen_on requested')
+                    screen_power(True)
+            except json.JSONDecodeError:
+                pass
+            except Exception as e:
+                print(f"[!] handler error: {e}")
     finally:
         connected_clients.discard(websocket)
         print(f"[-] Client disconnected ({len(connected_clients)} total)")

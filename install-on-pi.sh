@@ -52,9 +52,13 @@ cat > "${HOME_DIR}/.xinitrc" <<'EOF'
 # Start the static server in the background, then kiosk Chromium
 serve -s "$HOME/spindeck" -l 5173 >/tmp/spindeck-serve.log 2>&1 &
 
+# Disable screensaver / auto-blank, but KEEP DPMS enabled so the React app
+# can power the LCD backlight off via the hardware bridge (xset dpms force off)
+# and X11's wake-on-input automatically turns it back on at the next touch.
 xset s off
-xset -dpms
 xset s noblank
+xset +dpms
+xset dpms 0 0 0   # never auto-blank — only manual control via the bridge
 xrdb -merge ~/.Xresources 2>/dev/null
 unclutter -idle 0 &
 xsetroot -solid black

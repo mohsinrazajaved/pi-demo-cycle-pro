@@ -84,8 +84,32 @@ export default function Launcher() {
     }
   };
 
+  // Send a one-shot websocket message to the Pi-side hardware bridge.
+  // The bridge runs `xset dpms force off` to power down the LCD backlight.
+  // Touching the screen auto-wakes the display (X11 DPMS wake-on-input),
+  // and the same touch also fires the onClick below to dismiss the overlay.
+  const sendScreenPower = (on) => {
+    try {
+      const ws = new WebSocket('ws://localhost:8765');
+      ws.onopen = () => { ws.send(JSON.stringify({ type: on ? 'screen_on' : 'screen_off' })); ws.close(); };
+      ws.onerror = () => {};
+    } catch (_) { /* bridge offline — degrade to black overlay only */ }
+  };
+
+  const handlePowerOff = () => {
+    playTypewriterClick();
+    sendScreenPower(false);
+    setIsPoweredOff(true);
+  };
+
+  const handlePowerOn = () => {
+    sendScreenPower(true);
+    setIsPoweredOff(false);
+    setShowSplash(true);
+  };
+
   if (isPoweredOff) {
-    return <div className="h-screen w-screen bg-black cursor-pointer" onClick={() => { setIsPoweredOff(false); setShowSplash(true); }} />;
+    return <div className="h-screen w-screen bg-black cursor-pointer" onClick={handlePowerOn} />;
   }
 
   const initials = activeProfile?.name ? activeProfile.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
@@ -166,7 +190,7 @@ export default function Launcher() {
 
         {/* Power Off — 48px */}
         <button
-          onClick={() => { playTypewriterClick(); setIsPoweredOff(true); }}
+          onClick={handlePowerOff}
           className="flex-shrink-0 flex items-center justify-center gap-3 rounded-lg transition-all active:scale-[0.98]"
           style={{ height: '48px', background: '#1a1a1a' }}
         >

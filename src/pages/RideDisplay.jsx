@@ -160,15 +160,6 @@ export default function RideDisplay() {
     navigate(createPageUrl('PulseView') + buildPulseQuery());
   };
 
-  // Dev/test trigger: simulates the GPIO button_press WebSocket message so the flow
-  // can be exercised without the hardware. Starts the workout if it isn't already.
-  const simulateGpioButtonPress = () => {
-    if (!stateRef.current.isRunning || stateRef.current.isPaused) {
-      primeAudio();
-      updateWorkout({ isRunning: true, isPaused: false });
-    }
-    navigate(createPageUrl('PulseView') + buildPulseQuery('autoReturn=' + PULSE_VIEW_DURATION_SEC));
-  };
 
   // Hardware WebSocket bridge — rotary encoder + push button
   useEffect(() => {
@@ -411,15 +402,6 @@ export default function RideDisplay() {
           </div>
         )}
 
-        {/* Dev test button — simulates the GPIO long-press */}
-        <button
-          onClick={simulateGpioButtonPress}
-          className="fixed bottom-2 left-2 z-50 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-[#FF3F03]/40 text-[#FF3F03] hover:bg-[#FF3F03]/10 active:scale-95"
-          style={{ background: 'rgba(0,0,0,0.6)' }}
-          title="Simulate GPIO button_press"
-        >
-          Test GPIO
-        </button>
       </div>
     </div>
   );

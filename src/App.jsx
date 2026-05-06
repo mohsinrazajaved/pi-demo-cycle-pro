@@ -1,10 +1,12 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import NavigationTracker from '@/lib/NavigationTracker'
+import RouteLogger from '@/lib/RouteLogger'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import PageNotFound from './lib/PageNotFound';
+import NotFoundView from './lib/NotFoundView';
+import FitToViewport from './lib/FitToViewport';
+import { WorkoutProvider } from './components/ride/WorkoutContext';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -18,8 +20,10 @@ const LayoutWrapper = ({ children, currentPageName }) =>
 function App() {
   return (
     <QueryClientProvider client={queryClientInstance}>
+      <FitToViewport>
       <Router>
-        <NavigationTracker />
+        <RouteLogger />
+        <WorkoutProvider>
         <Routes>
           <Route path="/" element={
             <LayoutWrapper currentPageName={mainPageKey}>
@@ -37,9 +41,11 @@ function App() {
               }
             />
           ))}
-          <Route path="*" element={<PageNotFound />} />
+          <Route path="*" element={<NotFoundView />} />
         </Routes>
+        </WorkoutProvider>
       </Router>
+      </FitToViewport>
       <Toaster />
     </QueryClientProvider>
   )

@@ -99,20 +99,25 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    /* Match the Pi's Chromium default so Mac dev = Pi kiosk rendering.
+       DejaVu Sans is bundled via @fontsource (offline); Liberation Sans is
+       the Pi's system fallback; the generic names cover any other host. */
+    font-family: 'DejaVu Sans', 'Liberation Sans', 'Bitstream Vera Sans', sans-serif;
   }
 
-  /* Full-screen pages fill whatever viewport is available AND
-     never exceed it. max-height/max-width guarantees no child can
-     push the page past the screen edge on any dimension. */
+  /* Pages are rendered inside FitToViewport's 1024×600 canvas, so
+     h-screen / w-screen fill the canvas, NOT the real viewport.
+     This keeps the design fixed at 1024×600 while FitToViewport
+     handles kiosk overscan / viewport variance via transform:scale. */
   .h-screen {
-    height: 100vh !important;
-    max-height: 100vh !important;
+    height: 100% !important;
+    max-height: 100% !important;
   }
   .w-screen {
-    width: 100vw !important;
-    max-width: 100vw !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
-  .min-h-screen { min-height: 100vh !important; }
+  .min-h-screen { min-height: 100% !important; }
 
   /* Safety net: any direct child of root containers never overflows */
   .h-screen > *, .w-screen > * {

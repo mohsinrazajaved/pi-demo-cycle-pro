@@ -12,6 +12,8 @@ import AudioControl from '../components/ride/AudioControl';
 import PromptDialog from '../components/ride/PromptDialog';
 import { generateSessionPattern } from '../components/ride/sessionPatterns';
 import { INTERVAL_DURATION_SEC, PULSE_VIEW_DURATION_SEC, getVolume } from '@/config';
+import TimerRow from '../components/ride/TimerRow';
+import { useWorkout } from '../components/ride/WorkoutContext';
 
 const INTERVAL_DURATION = INTERVAL_DURATION_SEC;
 
@@ -43,19 +45,17 @@ function playCoinSound(volumePct = 100) {
 
 export default function RideDisplay() {
   const navigate = useNavigate();
-  const [isRunning, setIsRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [stats, setStats] = useState({
-    calories: 0, speed: 0, distance: 0, cadence: 0, heartRate: 0, power: 0,
-    maxSpeed: 0, maxCadence: 0, maxHeartRate: 0, maxPower: 0,
-    totalSpeed: 0, totalCadence: 0, totalHeartRate: 0, totalPower: 0, readings: 0
-  });
+  const { state: w, update: updateWorkout, reset: resetWorkoutState, subscribeTick, stateRef } = useWorkout();
+
+  // Timer-related fields are owned by the provider so they survive navigation.
+  const { isRunning, isPaused, elapsedSeconds, programPosition, targetDuration, isInfinity, intervalSecondsRemaining } = w;
+
+  const setIsRunning = useCallback((v) => updateWorkout(p => ({ isRunning: typeof v === 'function' ? v(p.isRunning) : v })), [updateWorkout]);
+  const setIsPaused  = useCallback((v) => updateWorkout(p => ({ isPaused:  typeof v === 'function' ? v(p.isPaused)  : v })), [updateWorkout]);
+
+  // Stats live in the provider so they keep accumulating across navigation.
+  const stats = w.stats;
   const [resistance, setResistance] = useState(5);
-  const [programPosition, setProgramPosition] = useState(0);
-  const [targetDuration, setTargetDuration] = useState(120 * 60); // 2 hours
-  const [isInfinity, setIsInfinity] = useState(false);
-  const [intervalSecondsRemaining, setIntervalSecondsRemaining] = useState(INTERVAL_DURATION);
   const [simHeartRate, setSimHeartRate] = useState(120); // demo: 120 BPM
   const [simRpm, setSimRpm] = useState(65);              // demo: 65 RPM
   const [simPower, setSimPower] = useState(140);         // demo: 140 W
@@ -73,31 +73,17 @@ export default function RideDisplay() {
   const [isManual, setIsManual] = useState(false);
   const [timeMultiplier, setTimeMultiplier] = useState(1);
 
-  const statsRef = useRef(stats);
-  const elapsedRef = useRef(elapsedSeconds);
-  const intervalSecondsRemainingRef = useRef(intervalSecondsRemaining);
-  const programPositionRef = useRef(programPosition);
   const resistanceRef = useRef(resistance);
-  const isRunningRef = useRef(isRunning);
-  const isPausedRef = useRef(isPaused);
   const isManualRef = useRef(isManual);
-  const isInfinityRef = useRef(isInfinity);
-  const targetDurationRef = useRef(targetDuration);
 
-  useEffect(() => { statsRef.current = stats; }, [stats]);
-  useEffect(() => { elapsedRef.current = elapsedSeconds; }, [elapsedSeconds]);
-  useEffect(() => { intervalSecondsRemainingRef.current = intervalSecondsRemaining; }, [intervalSecondsRemaining]);
-  useEffect(() => { programPositionRef.current = programPosition; }, [programPosition]);
   useEffect(() => { resistanceRef.current = resistance; }, [resistance]);
-  useEffect(() => { isRunningRef.current = isRunning; }, [isRunning]);
-  useEffect(() => { isPausedRef.current = isPaused; }, [isPaused]);
   useEffect(() => { isManualRef.current = isManual; }, [isManual]);
-  useEffect(() => { isInfinityRef.current = isInfinity; }, [isInfinity]);
-  useEffect(() => { targetDurationRef.current = targetDuration; }, [targetDuration]);
 
-  const p = new URLSearchParams(window.location.search);
-  const programId = p.get('program') || '';
-  const programLabel = [p.get('name'), p.get('durationLabel')].filter(Boolean).join(' ');
+  // programId/programLabel live in the context once the session is bootstrapped from URL,
+  // so round-trips to PulseView (which navigates back without query params) don't
+  // wipe out the program identity.
+  const programId = w.programId;
+  const programLabel = w.programLabel;
   const NUM_BARS = generateSessionPattern(programId).length;
   const maxResistanceForProgram = programId === 'small-step' ? 27 : 30;
 
@@ -111,10 +97,15 @@ export default function RideDisplay() {
     }
   }, [resistance, isManual]);
 
+  // Keep numBars in the provider in sync with the current program (used by the tick to wrap programPosition).
+  useEffect(() => {
+    updateWorkout({ numBars: NUM_BARS });
+  }, [NUM_BARS, updateWorkout]);
+
   const handleManual = () => {
     setIsManual(true);
     setProgramData(Array(NUM_BARS).fill(resistance));
-    setIsInfinity(true);
+    updateWorkout({ isInfinity: true });
   };
 
   const handleCoolDown = () => {
@@ -122,87 +113,64 @@ export default function RideDisplay() {
     setResistance(newResistance);
     setIsManual(true);
     setProgramData(Array(NUM_BARS).fill(newResistance));
-    setIsInfinity(false);
-    setTargetDuration(elapsedSeconds + 5 * 60);
+    updateWorkout(prev => ({ isInfinity: false, targetDuration: prev.elapsedSeconds + 5 * 60 }));
   };
 
-  const intervalRef = useRef(null);
   const lastCalorieMilestoneRef = useRef(0);
   const volumeRef = useRef(volume);
   useEffect(() => { volumeRef.current = volume; }, [volume]);
 
-  // Restore state from URL params (coming from PulseView, Pong, or initial load)
+  // Initial load from URL: only treat as a NEW session when the URL has a program but no
+  // running-elapsed marker. Returning from PulseView/Pong should not reset the timer.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (!params.get('program')) return;
+    const isFreshEntry = !params.get('elapsed') && !params.get('intervalRemaining');
+    if (!isFreshEntry) return;
 
-    const targetEndTimeParam = params.get('targetEndTime');
-    if (targetEndTimeParam === 'infinity') {
-      setIsInfinity(true);
-    } else if (targetEndTimeParam) {
-      setTargetDuration(Number(targetEndTimeParam));
-      setIsInfinity(false);
-    } else {
-      const duration = params.get('duration');
-      if (duration === 'infinity') setIsInfinity(true);
-      else if (duration) { setTargetDuration(Number(duration) * 60); setIsInfinity(false); }
-    }
+    // Fresh program selection — reset the workout context and apply URL config.
+    resetWorkoutState();
+    lastCalorieMilestoneRef.current = 0;
 
-    if (params.get('elapsed')) setElapsedSeconds(Number(params.get('elapsed')));
-    if (params.get('intervalRemaining')) setIntervalSecondsRemaining(Number(params.get('intervalRemaining')));
-    if (params.get('programPosition')) setProgramPosition(Number(params.get('programPosition')));
+    // Match the original behavior: timer auto-starts when entering the ride display
+    // from Launcher/DurationSelect (no `running` param). Only an explicit running=0 lands paused.
+    const runningParam = params.get('running');
+    const patch = {
+      isRunning: runningParam !== '0',
+      isPaused: runningParam === '0',
+      programId: params.get('program') || '',
+      programLabel: [params.get('name'), params.get('durationLabel')].filter(Boolean).join(' '),
+    };
+    const duration = params.get('duration');
+    if (duration === 'infinity') patch.isInfinity = true;
+    else if (duration) { patch.targetDuration = Number(duration) * 60; patch.isInfinity = false; }
     if (params.get('resistance')) setResistance(Number(params.get('resistance')));
     if (params.get('manual') === '1') setIsManual(true);
-    if (params.get('infinity') === '1') setIsInfinity(true);
+    updateWorkout(patch);
+  }, []); // eslint-disable-line
 
-    const running = params.get('running');
-    if (running === '0') { setIsRunning(false); setIsPaused(true); }
-    else { setIsRunning(true); setIsPaused(false); }
-  }, []);
-
-  useEffect(() => {
-    setStats(prev => ({
-      ...prev,
-      speed: 10, // fixed 10 km/h
-      cadence: simRpm,
-      heartRate: simHeartRate,
-      power: simPower
-    }));
-  }, [simRpm, simHeartRate, simPower]);
-
-  const generateSensorData = useCallback(() => ({
-    speed: 10, // demo: fixed 10 km/h
-    cadence: simRpm,
-    heartRate: simHeartRate,
-    power: simPower
-  }), [simRpm, simHeartRate, simPower]);
-
-  const buildReturnParams = useCallback(() => {
-    const params = new URLSearchParams(window.location.search);
+  const buildPulseQuery = (extra = '') => {
     const q = new URLSearchParams();
-    q.set('program', params.get('program') || programId);
-    q.set('elapsed', String(Math.round(elapsedRef.current)));
-    const infinity = isInfinityRef.current;
-    const targetEndTime = infinity ? 'infinity' : targetDurationRef.current;
-    q.set('targetEndTime', String(targetEndTime));
-    q.set('running', isRunningRef.current && !isPausedRef.current ? '1' : '0');
-    q.set('intervalRemaining', String(Math.round(intervalSecondsRemainingRef.current)));
-    q.set('programPosition', String(programPositionRef.current));
-    q.set('resistance', String(resistanceRef.current));
     q.set('manual', isManualRef.current ? '1' : '0');
-    q.set('infinity', infinity ? '1' : '0');
-    if (programLabel) q.set('name', programLabel);
-    return q.toString();
-  }, [programId, programLabel]);
+    q.set('resistance', String(resistanceRef.current));
+    return '?' + q.toString() + (extra ? '&' + extra : '');
+  };
 
   const handleHeartRateHold = () => {
-    navigate(createPageUrl('PulseView') + '?' + buildReturnParams());
+    navigate(createPageUrl('PulseView') + buildPulseQuery());
+  };
+
+  // Dev/test trigger: simulates the GPIO button_press WebSocket message so the flow
+  // can be exercised without the hardware. Starts the workout if it isn't already.
+  const simulateGpioButtonPress = () => {
+    if (!stateRef.current.isRunning || stateRef.current.isPaused) {
+      primeAudio();
+      updateWorkout({ isRunning: true, isPaused: false });
+    }
+    navigate(createPageUrl('PulseView') + buildPulseQuery('autoReturn=' + PULSE_VIEW_DURATION_SEC));
   };
 
   // Hardware WebSocket bridge — rotary encoder + push button
-  const buildReturnParamsRef = useRef(null);
-  useEffect(() => { buildReturnParamsRef.current = buildReturnParams; }, [buildReturnParams]);
-
   useEffect(() => {
     let ws = null;
     let reconnectTimer = null;
@@ -214,8 +182,12 @@ export default function RideDisplay() {
             const msg = JSON.parse(e.data);
             if (msg.type === 'resistance') {
               setResistance(prev => Math.min(30, Math.max(1, prev + (msg.delta || 0))));
-            } else if (msg.type === 'button_press' && buildReturnParamsRef.current) {
-              navigate(createPageUrl('PulseView') + '?' + buildReturnParamsRef.current() + '&autoReturn=' + PULSE_VIEW_DURATION_SEC);
+            } else if (msg.type === 'button_press') {
+              const q = new URLSearchParams();
+              q.set('manual', isManualRef.current ? '1' : '0');
+              q.set('resistance', String(resistanceRef.current));
+              q.set('autoReturn', String(PULSE_VIEW_DURATION_SEC));
+              navigate(createPageUrl('PulseView') + '?' + q.toString());
             }
           } catch (_) {}
         };
@@ -231,8 +203,8 @@ export default function RideDisplay() {
   }, [navigate]);
 
   const autoSave = useCallback(async () => {
-    const currentStats = statsRef.current;
-    const currentElapsed = elapsedRef.current;
+    const currentStats = stateRef.current.stats;
+    const currentElapsed = stateRef.current.elapsedSeconds;
     if (currentElapsed < 10) return;
     const avgDivisor = currentStats.readings || 1;
     await dataStore.entities.Workout.create({
@@ -250,63 +222,23 @@ export default function RideDisplay() {
       workout_date: new Date().toISOString()
     });
     toast.success('Workout saved!');
-  }, []);
+  }, [stateRef]);
 
+  // RideDisplay-only side effects on each provider tick: coin sound + program-complete UI.
   useEffect(() => {
-    if (isRunning && !isPaused) {
-      intervalRef.current = setInterval(() => {
-        const newData = generateSensorData();
-        const increment = Math.round(timeMultiplier * 1000) / 1000;
-        setElapsedSeconds(prev => {
-          const next = prev + increment;
-          // End the demo when the full program duration (2 hours) has elapsed
-          if (!isInfinityRef.current && next >= targetDurationRef.current) {
-            setIsRunning(false);
-            setIsPaused(false);
-            setShowProgramComplete(true);
-            setTimeout(() => autoSave(), 200);
-            return targetDurationRef.current;
-          }
-          return next;
-        });
-        setStats(prev => {
-          const newReadings = prev.readings + 1;
-          const newCalories = prev.calories + (500 / 3600) * increment; // 500 kcal/hr = 8.33/min
-          const newMilestone = Math.floor(newCalories / 100);
-          if (newMilestone > lastCalorieMilestoneRef.current) {
-            lastCalorieMilestoneRef.current = newMilestone;
-            playCoinSound(volumeRef.current);
-          }
-          return {
-            ...prev,
-            speed: newData.speed, cadence: newData.cadence,
-            heartRate: newData.heartRate, power: newData.power,
-            distance: prev.distance + (10 / 3600) * increment,
-            calories: newCalories,
-            maxSpeed: Math.max(prev.maxSpeed, newData.speed),
-            maxCadence: Math.max(prev.maxCadence, newData.cadence),
-            maxHeartRate: Math.max(prev.maxHeartRate, newData.heartRate),
-            maxPower: Math.max(prev.maxPower, newData.power),
-            totalSpeed: prev.totalSpeed + newData.speed,
-            totalCadence: prev.totalCadence + newData.cadence,
-            totalHeartRate: prev.totalHeartRate + newData.heartRate,
-            totalPower: prev.totalPower + newData.power,
-            readings: newReadings
-          };
-        });
-        setIntervalSecondsRemaining(prev => {
-          const newRemaining = prev - increment;
-          if (newRemaining <= 0) {
-            // Interval completed — advance program bar, loop if it reaches end
-            setProgramPosition(pos => (pos + 1) % NUM_BARS);
-            return INTERVAL_DURATION;
-          }
-          return newRemaining;
-        });
-      }, 1000);
-    }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [isRunning, isPaused, generateSensorData, timeMultiplier, autoSave]);
+    const unsubscribe = subscribeTick(({ next, stop }) => {
+      const newMilestone = Math.floor(next.stats.calories / 100);
+      if (newMilestone > lastCalorieMilestoneRef.current) {
+        lastCalorieMilestoneRef.current = newMilestone;
+        playCoinSound(volumeRef.current);
+      }
+      if (stop) {
+        setShowProgramComplete(true);
+        setTimeout(() => autoSave(), 200);
+      }
+    });
+    return unsubscribe;
+  }, [subscribeTick, autoSave]);
 
   const handleStop = async () => {
     if (elapsedSeconds < 10) { resetWorkout(true); return; }
@@ -330,31 +262,11 @@ export default function RideDisplay() {
   };
 
   const resetWorkout = (goHome = false) => {
-    setIsRunning(false); setIsPaused(false);
-    setElapsedSeconds(0); setProgramPosition(0);
-    setIntervalSecondsRemaining(INTERVAL_DURATION);
+    resetWorkoutState();
     setShowProgramComplete(false);
     lastCalorieMilestoneRef.current = 0;
-    setStats({
-      calories: 0, speed: 0, distance: 0, cadence: 0, heartRate: 0, power: 0,
-      maxSpeed: 0, maxCadence: 0, maxHeartRate: 0, maxPower: 0,
-      totalSpeed: 0, totalCadence: 0, totalHeartRate: 0, totalPower: 0, readings: 0
-    });
     if (goHome) navigate(createPageUrl('Launcher'));
   };
-
-  const formatTime = (totalSeconds) => {
-    const rounded = Math.round(totalSeconds);
-    const hrs = Math.floor(rounded / 3600);
-    const mins = Math.floor((rounded % 3600) / 60);
-    const secs = rounded % 60;
-    if (hrs > 0) return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatTimeRemaining = () => formatTime(Math.max(0, targetDuration - elapsedSeconds));
-
-
 
   const handleHomeClick = () => {
     if (isRunning) setShowHomeConfirm(true);
@@ -374,25 +286,15 @@ export default function RideDisplay() {
           {/* Top Section — 258px: timers 90px + calories/controls 168px */}
           <div style={{ height: '258px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
             {/* Timer row — 90px */}
-            <div className="flex gap-2" style={{ height: '90px', flexShrink: 0, padding: '8px 8px 0 8px' }}>
-              {[
-                { label: 'Interval Remaining', value: formatTime(intervalSecondsRemaining) },
-                { label: 'Program Remaining',  value: isInfinity ? '∞' : formatTimeRemaining() },
-                { label: 'Elapsed Time',        value: formatTime(elapsedSeconds), dot: true },
-              ].map(({ label, value, dot }) => (
-                <div key={label} className="flex-1 rounded-md flex flex-col items-center justify-center overflow-hidden"
-                  style={{ background: '#3f3f3f' }}
-                >
-                  <span style={{ fontSize: '12px' }} className="uppercase tracking-widest text-zinc-300 leading-none mb-1 flex-shrink-0 font-semibold">{label}</span>
-                  <div className="font-bold text-[#FF3F03] leading-none flex items-center gap-1 whitespace-nowrap"
-                    style={{ fontSize: '36px' }}
-                  >
-                    {dot && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isRunning && !isPaused ? 'bg-[#FF3F03] animate-pulse' : isPaused ? 'bg-amber-400' : 'bg-zinc-600'}`} />}
-                    {value}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TimerRow
+              variant="ride"
+              intervalSecondsRemaining={intervalSecondsRemaining}
+              elapsedSeconds={elapsedSeconds}
+              targetDuration={targetDuration}
+              isInfinity={isInfinity}
+              isRunning={isRunning}
+              isPaused={isPaused}
+            />
 
             {/* Calories + controls row — 168px */}
             <div style={{ height: '168px', flexShrink: 0, display: 'flex', padding: '6px 8px' }}>
@@ -508,6 +410,16 @@ export default function RideDisplay() {
             </div>
           </div>
         )}
+
+        {/* Dev test button — simulates the GPIO long-press */}
+        <button
+          onClick={simulateGpioButtonPress}
+          className="fixed bottom-2 left-2 z-50 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border border-[#FF3F03]/40 text-[#FF3F03] hover:bg-[#FF3F03]/10 active:scale-95"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
+          title="Simulate GPIO button_press"
+        >
+          Test GPIO
+        </button>
       </div>
     </div>
   );

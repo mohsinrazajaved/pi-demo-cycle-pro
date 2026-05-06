@@ -5,6 +5,8 @@ import SessionTimeline from '../components/ride/SessionTimeline';
 import { dataStore } from '@/services/localStore';
 import { generateSessionPattern } from '../components/ride/sessionPatterns';
 import { INTERVAL_DURATION_SEC, DEFAULT_TARGET_DURATION_SEC } from '@/config';
+import TimerRow from '../components/ride/TimerRow';
+import { useWorkout } from '../components/ride/WorkoutContext';
 
 // Safely turn a URL param into a number. Returns `fallback` for null,
 // '', NaN, negative, or anything not finite. Prevents the dreaded
@@ -18,7 +20,7 @@ function safeNum(raw, fallback) {
 function HeartRateGauge({ heartRate }) {
   const MIN = 60;
   const MAX = 180;
-  // The arc goes from the left end (angle=-180° from center = 180deg in SVG terms) 
+  // The arc goes from the left end (angle=-180° from center = 180deg in SVG terms)
   // to the right end (angle=0°). Center of arc is at (50,50).
   // Left end of arc (10,50) corresponds to 180deg, right end (90,50) to 0deg.
   // So: MIN -> 180deg, MAX -> 0deg  =>  angle = 180 - ((val-MIN)/(MAX-MIN))*180
@@ -68,18 +70,14 @@ export default function PulseView() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
 
-  // State passed from RideDisplay (parse defensively so a missing/bad value
-  // can never bump the timers to a wrong number)
-  const program = urlParams.get('program') || '';
-  const targetEndTimeParam = urlParams.get('targetEndTime') || '';
-  const isManual = urlParams.get('manual') === '1';
-  const isInfinity = targetEndTimeParam === 'infinity' || urlParams.get('infinity') === '1';
-  const targetDuration = isInfinity ? Infinity : safeNum(targetEndTimeParam, DEFAULT_TARGET_DURATION_SEC);
-  const wasRunning = urlParams.get('running') === '1';
+  // All timer state comes from the shared WorkoutContext — same instance the RideDisplay
+  // ride display reads, so the timer keeps ticking through navigation.
+  const { state: w } = useWorkout();
+  const { elapsedSeconds, intervalSecondsRemaining, programPosition, isRunning, isPaused, targetDuration, isInfinity } = w;
 
-  const [elapsedSeconds, setElapsedSeconds] = useState(safeNum(urlParams.get('elapsed'), 0));
-  const [intervalSecondsRemaining, setIntervalSecondsRemaining] = useState(safeNum(urlParams.get('intervalRemaining'), INTERVAL_DURATION_SEC));
-  const [programPosition, setProgramPosition] = useState(safeNum(urlParams.get('programPosition'), 0));
+  // Program identity comes from context; manual/resistance come on the URL from RideDisplay.
+  const program = w.programId;
+  const isManual = urlParams.get('manual') === '1';
 
   const [heartRate, setHeartRate] = useState(120); // demo: 120 BPM
   const [simRpm, setSimRpm] = useState(65);
@@ -113,25 +111,6 @@ export default function PulseView() {
     return () => clearInterval(timer);
   }, []); // eslint-disable-line
 
-  const INTERVAL_DURATION = INTERVAL_DURATION_SEC;
-
-  // Keep timers running if workout was running
-  useEffect(() => {
-    if (!wasRunning) return;
-    const interval = setInterval(() => {
-      setElapsedSeconds(prev => prev + timeMultiplier);
-      setIntervalSecondsRemaining(prev => {
-        const next = prev - timeMultiplier;
-        if (next <= 0) {
-          setProgramPosition(p => (p + 1) % NUM_BARS);
-          return INTERVAL_DURATION;
-        }
-        return next;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [wasRunning, timeMultiplier]);
-
   const NUM_BARS = generateSessionPattern(program, resistance).length;
 
   // For small-step, cap resistance at 27 (max offset is 3, so 27+3=30)
@@ -149,19 +128,6 @@ export default function PulseView() {
       setProgramData(generateSessionPattern(program, resistance));
     }
   }, [resistance, isManual]);
-
-  const formatTime = (totalSeconds) => {
-    const hrs = Math.floor(totalSeconds / 3600);
-    const mins = Math.floor((totalSeconds % 3600) / 60);
-    const secs = Math.floor(totalSeconds % 60);
-    if (hrs > 0) return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatTimeRemaining = () => {
-    if (isInfinity) return '∞';
-    return formatTime(Math.max(0, targetDuration - elapsedSeconds));
-  };
 
   const getHeartRateColor = (hr) => {
     const MIN = 60;
@@ -197,13 +163,8 @@ export default function PulseView() {
   };
 
   const handleBackToBike = () => {
-    // Pass the absolute target end time back to RideDisplay
-    const passableTargetEndTime = isInfinity ? 'infinity' : targetDuration;
-
-    navigate(
-      createPageUrl('RideDisplay') +
-      `?program=${program}&targetEndTime=${passableTargetEndTime}&elapsed=${elapsedSeconds}&intervalRemaining=${intervalSecondsRemaining}&programPosition=${programPosition}&running=${wasRunning ? '1' : '0'}&resistance=${resistance}&manual=${isManual ? '1' : '0'}&infinity=${isInfinity ? '1' : '0'}`
-    );
+    // No URL params — context state preserves the timer across the route change.
+    navigate(createPageUrl('RideDisplay'));
   };
 
   // Keep the ref pointing at the latest handleBackToBike, so the autoReturn
@@ -226,25 +187,15 @@ export default function PulseView() {
       {/* Main Content — fixed-pixel layout: 72 + 388 + 108 + paddings/gaps = 600 */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: '8px', gap: '8px' }}>
         {/* Header — 72px */}
-        <div className="flex gap-2 flex-shrink-0" style={{ height: '72px' }}>
-          {[
-            { label: 'Interval Remaining', value: formatTime(intervalSecondsRemaining) },
-            { label: 'Program Remaining',  value: formatTimeRemaining(), large: isInfinity },
-            { label: 'Elapsed Time',       value: formatTime(elapsedSeconds), dot: true },
-          ].map(({ label, value, large, dot }) => (
-            <div key={label} className="flex-1 rounded-md flex flex-col items-center justify-center"
-              style={{ background: '#3f3f3f' }}
-            >
-              <span className="text-[12px] uppercase tracking-widest text-zinc-300 leading-none mb-1 font-semibold">{label}</span>
-              <div className="font-bold text-[#FF3F03] leading-none flex items-center gap-1 whitespace-nowrap"
-                style={{ fontSize: large ? '32px' : '28px' }}
-              >
-                {dot && <span className={`w-1.5 h-1.5 rounded-full ${wasRunning ? 'bg-[#FF3F03] animate-pulse' : 'bg-zinc-600'}`} />}
-                {value}
-              </div>
-            </div>
-          ))}
-        </div>
+        <TimerRow
+          variant="pulse"
+          intervalSecondsRemaining={intervalSecondsRemaining}
+          elapsedSeconds={elapsedSeconds}
+          targetDuration={targetDuration}
+          isInfinity={isInfinity}
+          isRunning={isRunning}
+          isPaused={isPaused}
+        />
 
         {/* Centre — 388px */}
         <div className="flex gap-2 flex-shrink-0" style={{ height: '388px' }}>

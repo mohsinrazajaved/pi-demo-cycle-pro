@@ -6,6 +6,7 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import NotFoundView from './lib/NotFoundView';
 import FitToViewport from './lib/FitToViewport';
+import { WorkoutProvider } from './components/ride/WorkoutContext';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -22,6 +23,7 @@ function App() {
       <FitToViewport>
       <Router>
         <RouteLogger />
+        <WorkoutProvider>
         <Routes>
           <Route path="/" element={
             <LayoutWrapper currentPageName={mainPageKey}>
@@ -41,6 +43,7 @@ function App() {
           ))}
           <Route path="*" element={<NotFoundView />} />
         </Routes>
+        </WorkoutProvider>
       </Router>
       </FitToViewport>
       <Toaster />

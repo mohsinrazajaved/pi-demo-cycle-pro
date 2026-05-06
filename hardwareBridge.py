@@ -116,17 +116,20 @@ async def poll_button():
         prev = current
         await asyncio.sleep(0.01)  # poll at 100 Hz
 
-# ── Screen power control (DPMS) ──────────────────────────────────────────────
-# When the React app sends {"type": "screen_off"} we tell X11 to power down
-# the HDMI display via DPMS. The Waveshare LCD reads no signal and (on most
-# revisions) drops the backlight. Any touch on the screen auto-wakes via X's
-# built-in DPMS wake-on-input behaviour.
+# ── Screen power control (Sway/Wayland) ──────────────────────────────────────
+# The Pi 5 runs Sway (Wayland compositor). We control the display via Sway's
+# IPC socket. Touch events reach the React app while the screen is off, so the
+# onClick handler sends screen_on to wake the display back up.
 def screen_power(on: bool) -> None:
-    cmd = ['xset', 'dpms', 'force', 'on' if on else 'off']
+    import glob
+    socks = glob.glob('/run/user/1000/sway-ipc.*.sock')
+    if not socks:
+        print("[!] screen_power: Sway IPC socket not found")
+        return
+    cmd = ['swaymsg', '-s', socks[0], 'output', 'HDMI-A-1', 'power', 'on' if on else 'off']
     try:
         subprocess.Popen(
             cmd,
-            env={**os.environ, 'DISPLAY': os.environ.get('DISPLAY', ':0')},
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
     except Exception as e:

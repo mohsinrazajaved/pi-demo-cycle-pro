@@ -149,6 +149,11 @@ export default function RideDisplay() {
       programId: pid,
       programLabel: [params.get('name'), params.get('durationLabel')].filter(Boolean).join(' '),
       intervalSecondsRemaining: getIntervalDurationSec(pid),
+      // Seed numBars from the new program. Without this, the "sync" effect won't
+      // re-fire when the bar count happens to match the previous program (e.g.
+      // two 10-min programs in a row, both 20 bars), leaving numBars at the
+      // reset's default of 1 — which freezes programPosition at 0 forever.
+      numBars: generateSessionPattern(pid).length,
     };
     const duration = params.get('duration');
     if (duration === 'infinity') patch.isInfinity = true;

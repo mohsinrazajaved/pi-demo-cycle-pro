@@ -122,13 +122,24 @@ async def poll_button():
 # revisions) drops the backlight. Any touch on the screen auto-wakes via X's
 # built-in DPMS wake-on-input behaviour.
 def screen_power(on: bool) -> None:
-    cmd = ['xset', 'dpms', 'force', 'on' if on else 'off']
+    import glob, json
+    socks = glob.glob('/run/user/1000/sway-ipc.*.sock')
+    if not socks:
+        print("[!] screen_power: Sway IPC socket not found")
+        return
+    sock = socks[0]
     try:
-        subprocess.Popen(
-            cmd,
-            env={**os.environ, 'DISPLAY': os.environ.get('DISPLAY', ':0')},
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        result = subprocess.run(
+            ['swaymsg', '-s', sock, '-t', 'get_outputs', '--raw'],
+            capture_output=True, text=True, timeout=3,
         )
+        outputs = json.loads(result.stdout)
+        active = next((o['name'] for o in outputs if o.get('active')), 'HDMI-A-1')
+    except Exception:
+        active = 'HDMI-A-1'
+    cmd = ['swaymsg', '-s', sock, 'output', active, 'power', 'on' if on else 'off']
+    try:
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception as e:
         print(f"[!] screen_power({on}) failed: {e}")
 

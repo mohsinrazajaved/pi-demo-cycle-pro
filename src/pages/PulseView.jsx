@@ -4,7 +4,6 @@ import { createPageUrl } from '@/utils';
 import SessionTimeline from '../components/ride/SessionTimeline';
 import { dataStore } from '@/services/localStore';
 import { generateSessionPattern } from '../components/ride/sessionPatterns';
-import { INTERVAL_DURATION_SEC, DEFAULT_TARGET_DURATION_SEC } from '@/config';
 import TimerRow from '../components/ride/TimerRow';
 import { useWorkout } from '../components/ride/WorkoutContext';
 
@@ -79,11 +78,8 @@ export default function PulseView() {
   const program = w.programId;
   const isManual = urlParams.get('manual') === '1';
 
-  const [heartRate, setHeartRate] = useState(120); // demo: 120 BPM
-  const [simRpm, setSimRpm] = useState(65);
-  const [simPower, setSimPower] = useState(140);
-  const [resistance, setResistance] = useState(safeNum(urlParams.get('resistance'), 5));
-  const [timeMultiplier, setTimeMultiplier] = useState(1);
+  const [heartRate] = useState(120); // demo: 120 BPM
+  const [resistance] = useState(safeNum(urlParams.get('resistance'), 5));
   const [profileAge, setProfileAge] = useState(44); // age 44 → max HR 176 → 120/176 = 68%
   const autoReturn = safeNum(urlParams.get('autoReturn'), 0);
 
@@ -109,13 +105,9 @@ export default function PulseView() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, []); // eslint-disable-line
+  }, []);
 
   const NUM_BARS = generateSessionPattern(program, resistance).length;
-
-  // For small-step, cap resistance at 27 (max offset is 3, so 27+3=30)
-  // In manual mode, no cap needed
-  const maxResistanceForProgram = (!isManual && program === 'small-step') ? 27 : 30;
 
   const [programData, setProgramData] = useState(() =>
     isManual ? Array(NUM_BARS).fill(resistance) : generateSessionPattern(program, resistance)
@@ -235,7 +227,7 @@ export default function PulseView() {
 
         {/* Bottom — 108px */}
         <div style={{ height: '108px', flexShrink: 0 }}>
-          <SessionTimeline programData={programData} currentPosition={programPosition} resistance={resistance} isComplete={false} programLabel="" />
+          <SessionTimeline programData={programData} currentPosition={programPosition} resistance={resistance} isComplete={false} programLabel="" elapsedSeconds={elapsedSeconds} targetDuration={targetDuration} isInfinity={isInfinity} />
         </div>
       </div>
     </div>

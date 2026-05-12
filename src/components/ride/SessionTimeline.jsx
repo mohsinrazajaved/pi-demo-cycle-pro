@@ -10,17 +10,27 @@ const ACTIVE_BAR_INDEX = 10;
 const VISIBLE_BAR_COUNT = 21;
 const BANNER_BAR_SPAN = 4;
 const BANNER_WIDTH_PCT = (BANNER_BAR_SPAN / VISIBLE_BAR_COUNT) * 100;
+const BANNER_ENTRY_SLOT = VISIBLE_BAR_COUNT;
+const BANNER_END_SLOT = ACTIVE_BAR_INDEX - BANNER_BAR_SPAN / 2;
+
+/** @param {number} currentPosition */
+function deriveScrollWindow(currentPosition) {
+  const startIdx = currentPosition < ACTIVE_BAR_INDEX ? 0 : currentPosition - ACTIVE_BAR_INDEX;
+  const highlightSlot = currentPosition < ACTIVE_BAR_INDEX ? currentPosition : ACTIVE_BAR_INDEX;
+  return { startIdx, highlightSlot };
+}
 
 /**
  * @param {number} currentPosition
  * @param {number} totalBars
+ * @param {boolean} isInfinity
  */
-function deriveScrollWindow(currentPosition, totalBars) {
+function deriveBannerPosition(currentPosition, totalBars, isInfinity) {
+  if (isInfinity || totalBars <= 0) return { bannerLeft: BANNER_ENTRY_SLOT, bannerVisible: false };
   const startIdx = currentPosition < ACTIVE_BAR_INDEX ? 0 : currentPosition - ACTIVE_BAR_INDEX;
-  const highlightSlot = currentPosition < ACTIVE_BAR_INDEX ? currentPosition : ACTIVE_BAR_INDEX;
-  const bannerStart = totalBars - startIdx;
-  const bannerVisible = bannerStart < VISIBLE_BAR_COUNT && bannerStart + BANNER_BAR_SPAN > 0;
-  return { startIdx, highlightSlot, bannerStart, bannerVisible };
+  const bannerLeft = totalBars - startIdx;
+  const bannerVisible = bannerLeft < VISIBLE_BAR_COUNT && bannerLeft + BANNER_BAR_SPAN > 0;
+  return { bannerLeft, bannerVisible };
 }
 
 /**
@@ -48,9 +58,12 @@ function pickBarHeight({ animatedHeights, animatedIdx, dataIdx, programData, tot
  *   isComplete: boolean,
  *   programLabel?: string,
  *   volume?: number,
+ *   elapsedSeconds?: number,
+ *   targetDuration?: number,
+ *   isInfinity?: boolean,
  * }} props
  */
-export default function SessionTimeline({ programData, currentPosition, resistance, isComplete, programLabel, volume = 100 }) {
+export default function SessionTimeline({ programData, currentPosition, resistance, isComplete, programLabel, volume = 100, elapsedSeconds = 0, targetDuration = 0, isInfinity = false }) {
   const totalBars = programData.length;
   const { heights, bannerVisible: flickerVisible, eqPhaseMs } = useCompletionAnimation(VISIBLE_BAR_COUNT, isComplete);
 
@@ -62,9 +75,11 @@ export default function SessionTimeline({ programData, currentPosition, resistan
     playFinishCheer({ durationMs: eqPhaseMs, volumePct: volume });
   }, [isComplete, eqPhaseMs, volume]);
 
-  const { startIdx, highlightSlot, bannerStart, bannerVisible: scrollingVisible } = deriveScrollWindow(currentPosition, totalBars);
+  const { startIdx, highlightSlot } = deriveScrollWindow(currentPosition);
+  const { bannerLeft, bannerVisible: scrollingVisible } = deriveBannerPosition(currentPosition, totalBars, isInfinity);
   const showScrollingBanner = !isComplete && scrollingVisible;
   const showFlickerBanner = isComplete && flickerVisible;
+  const isCoveredByBanner = (i) => showScrollingBanner && i + 1 > bannerLeft && i < bannerLeft + BANNER_BAR_SPAN;
 
   return (
     <div className="w-full h-full rounded-md p-2 flex flex-col" style={{ background: '#000' }}>
@@ -87,9 +102,10 @@ export default function SessionTimeline({ programData, currentPosition, resistan
             totalBars,
           });
 
+          const hidden = isCoveredByBanner(displayIdx);
           return (
             <div key={displayIdx} className="flex-1 flex flex-col justify-end" style={{ height: '100%' }}>
-              {height > 0 && (
+              {!hidden && height != null && height > 0 && (
                 <div
                   className="w-full rounded-t-sm"
                   style={{
@@ -105,7 +121,7 @@ export default function SessionTimeline({ programData, currentPosition, resistan
 
         {showScrollingBanner && (
           <ScrollingGameOver
-            leftPercent={(bannerStart / VISIBLE_BAR_COUNT) * 100}
+            leftPercent={(bannerLeft / VISIBLE_BAR_COUNT) * 100}
             widthPercent={BANNER_WIDTH_PCT}
           />
         )}

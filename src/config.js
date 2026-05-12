@@ -10,7 +10,17 @@ export const PULSE_VIEW_DURATION_SEC = 10;
 // Length of each program "interval" (one bar in the program bar chart).
 // The same value is used by RideDisplay's countdown and PulseView when the
 // workout keeps running while the heart-rate overlay is shown.
-export const INTERVAL_DURATION_SEC = 120;
+export const INTERVAL_DURATION_SEC = 30;
+
+/** @type {Record<string, number>} */
+const INTERVAL_OVERRIDES = {
+  'small-plateau-1': 2,
+};
+
+/** @param {string} programId */
+export function getIntervalDurationSec(programId) {
+  return INTERVAL_OVERRIDES[programId] ?? INTERVAL_DURATION_SEC;
+}
 
 // Default workout length when no `?duration=` param is provided
 // (e.g., entering RideDisplay directly without going through DurationSelect).

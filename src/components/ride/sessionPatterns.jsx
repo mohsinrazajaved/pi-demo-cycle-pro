@@ -113,6 +113,7 @@ export const PROGRAM_PATTERNS = {
   'big-step-140': bs(140),
 
   // ── Small Plateau ──────────────────────────────────────────────────────────
+  'small-plateau-1':  [2, 2, 2, 4, 4, 4, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 4, 4, 4, 2, 2, 2],
   'small-plateau':    [2, 2, 4, 4, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 4, 4, 2, 2],
   'small-plateau-10': [2, 2, 4, 4, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 4, 4, 2, 2],
   'small-plateau-20': [2, 2, 2, 2, 4, 4, 4, 4, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 4, 4, 4, 4, 2, 2, 2, 2],
@@ -147,7 +148,7 @@ export const PROGRAM_PATTERNS = {
 };
 
 export const PATTERN_BASE = {
-  'small-plateau': 2, 'small-plateau-10': 2, 'small-plateau-20': 2, 'small-plateau-30': 2, 'small-plateau-40': 2, 'small-plateau-50': 2,
+  'small-plateau': 2, 'small-plateau-1': 2, 'small-plateau-10': 2, 'small-plateau-20': 2, 'small-plateau-30': 2, 'small-plateau-40': 2, 'small-plateau-50': 2,
   'small-plateau-60': 2, 'small-plateau-70': 2, 'small-plateau-80': 2, 'small-plateau-90': 2, 'small-plateau-100': 2,
   'small-plateau-110': 2, 'small-plateau-120': 2, 'small-plateau-130': 2, 'small-plateau-140': 2,
   'small-interval-10': 2, 'small-interval-20': 2, 'small-interval-30': 2, 'small-interval-40': 2, 'small-interval-50': 2,

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { INTERVAL_DURATION_SEC } from '@/config';
+import { INTERVAL_DURATION_SEC, getIntervalDurationSec } from '@/config';
 
 const WorkoutContext = createContext(null);
 
@@ -49,7 +49,7 @@ export function WorkoutProvider({ children }) {
       let nextPos = prev.programPosition;
       if (nextInterval <= 0) {
         nextPos = (nextPos + 1) % Math.max(1, prev.numBars);
-        nextInterval = INTERVAL_DURATION_SEC;
+        nextInterval = getIntervalDurationSec(prev.programId);
       }
       let stop = false;
       if (!prev.isInfinity && nextElapsed >= prev.targetDuration) {
@@ -111,10 +111,21 @@ export function WorkoutProvider({ children }) {
   );
 }
 
+/**
+ * @typedef {{
+ *   state: any,
+ *   update: (patch: any) => void,
+ *   reset: () => void,
+ *   subscribeTick: (listener: (e: any) => void) => () => void,
+ *   stateRef: { current: any },
+ * }} WorkoutContextValue
+ */
+
+/** @returns {WorkoutContextValue} */
 export function useWorkout() {
   const ctx = useContext(WorkoutContext);
   if (!ctx) throw new Error('useWorkout must be used within WorkoutProvider');
-  return ctx;
+  return /** @type {WorkoutContextValue} */ (ctx);
 }
 
 export function formatWorkoutTime(totalSeconds) {

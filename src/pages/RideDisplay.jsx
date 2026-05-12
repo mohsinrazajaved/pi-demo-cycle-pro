@@ -11,7 +11,7 @@ import ScreenDimmer from '../components/ride/ScreenDimmer';
 import AudioControl from '../components/ride/AudioControl';
 import PromptDialog from '../components/ride/PromptDialog';
 import { generateSessionPattern } from '../components/ride/sessionPatterns';
-import { INTERVAL_DURATION_SEC, PULSE_VIEW_DURATION_SEC, getVolume } from '@/config';
+import { INTERVAL_DURATION_SEC, PULSE_VIEW_DURATION_SEC, getVolume, getIntervalDurationSec } from '@/config';
 import TimerRow from '../components/ride/TimerRow';
 import { useWorkout } from '../components/ride/WorkoutContext';
 
@@ -95,7 +95,7 @@ export default function RideDisplay() {
     } else {
       setProgramData(Array(NUM_BARS).fill(resistance));
     }
-  }, [resistance, isManual]);
+  }, [programId, resistance, isManual, NUM_BARS]);
 
   // Keep numBars in the provider in sync with the current program (used by the tick to wrap programPosition).
   useEffect(() => {
@@ -105,7 +105,8 @@ export default function RideDisplay() {
   const handleManual = () => {
     setIsManual(true);
     setProgramData(Array(NUM_BARS).fill(resistance));
-    updateWorkout({ isInfinity: true });
+    setShowProgramComplete(false);
+    updateWorkout({ isInfinity: true, isRunning: true, isPaused: false });
   };
 
   const handleCoolDown = () => {
@@ -113,12 +114,18 @@ export default function RideDisplay() {
     setResistance(newResistance);
     setIsManual(true);
     setProgramData(Array(NUM_BARS).fill(newResistance));
-    updateWorkout(prev => ({ isInfinity: false, targetDuration: prev.elapsedSeconds + 5 * 60 }));
+    setShowProgramComplete(false);
+    updateWorkout(/** @param {any} prev */ (prev) => ({ isInfinity: false, targetDuration: prev.elapsedSeconds + 5 * 60, isRunning: true, isPaused: false }));
   };
 
   const lastCalorieMilestoneRef = useRef(0);
   const volumeRef = useRef(volume);
   useEffect(() => { volumeRef.current = volume; }, [volume]);
+
+  useEffect(() => {
+    setShowProgramComplete(false);
+    lastCalorieMilestoneRef.current = 0;
+  }, [w.programId]);
 
   // Initial load from URL: only treat as a NEW session when the URL has a program but no
   // running-elapsed marker. Returning from PulseView/Pong should not reset the timer.
@@ -135,11 +142,14 @@ export default function RideDisplay() {
     // Match the original behavior: timer auto-starts when entering the ride display
     // from Launcher/DurationSelect (no `running` param). Only an explicit running=0 lands paused.
     const runningParam = params.get('running');
+    const pid = params.get('program') || '';
+    /** @type {Record<string, any>} */
     const patch = {
       isRunning: runningParam !== '0',
       isPaused: runningParam === '0',
-      programId: params.get('program') || '',
+      programId: pid,
       programLabel: [params.get('name'), params.get('durationLabel')].filter(Boolean).join(' '),
+      intervalSecondsRemaining: getIntervalDurationSec(pid),
     };
     const duration = params.get('duration');
     if (duration === 'infinity') patch.isInfinity = true;
@@ -160,6 +170,14 @@ export default function RideDisplay() {
     navigate(createPageUrl('PulseView') + buildPulseQuery());
   };
 
+  /** Same navigation as GPIO `button_press` from hardwareBridge.py (for on-bike testing without the bridge). */
+  const openPulseViewLikeGpioButton = useCallback(() => {
+    const q = new URLSearchParams();
+    q.set('manual', isManualRef.current ? '1' : '0');
+    q.set('resistance', String(resistanceRef.current));
+    q.set('autoReturn', String(PULSE_VIEW_DURATION_SEC));
+    navigate(createPageUrl('PulseView') + '?' + q.toString());
+  }, [navigate]);
 
   // Hardware WebSocket bridge — rotary encoder + push button
   useEffect(() => {
@@ -174,11 +192,7 @@ export default function RideDisplay() {
             if (msg.type === 'resistance') {
               setResistance(prev => Math.min(30, Math.max(1, prev + (msg.delta || 0))));
             } else if (msg.type === 'button_press') {
-              const q = new URLSearchParams();
-              q.set('manual', isManualRef.current ? '1' : '0');
-              q.set('resistance', String(resistanceRef.current));
-              q.set('autoReturn', String(PULSE_VIEW_DURATION_SEC));
-              navigate(createPageUrl('PulseView') + '?' + q.toString());
+              openPulseViewLikeGpioButton();
             }
           } catch (_) {}
         };
@@ -191,7 +205,7 @@ export default function RideDisplay() {
       if (reconnectTimer) clearTimeout(reconnectTimer);
       if (ws) ws.close();
     };
-  }, [navigate]);
+  }, [openPulseViewLikeGpioButton]);
 
   const autoSave = useCallback(async () => {
     const currentStats = stateRef.current.stats;
@@ -358,6 +372,9 @@ export default function RideDisplay() {
               isComplete={showProgramComplete}
               programLabel={programLabel}
               volume={volume}
+              elapsedSeconds={elapsedSeconds}
+              targetDuration={targetDuration}
+              isInfinity={isInfinity}
             />
           </div>
 

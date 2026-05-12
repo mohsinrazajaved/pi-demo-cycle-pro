@@ -23,10 +23,9 @@ function deriveScrollWindow(currentPosition) {
 /**
  * @param {number} currentPosition
  * @param {number} totalBars
- * @param {boolean} isInfinity
  */
-function deriveBannerPosition(currentPosition, totalBars, isInfinity) {
-  if (isInfinity || totalBars <= 0) return { bannerLeft: BANNER_ENTRY_SLOT, bannerVisible: false };
+function deriveBannerPosition(currentPosition, totalBars) {
+  if (totalBars <= 0) return { bannerLeft: BANNER_ENTRY_SLOT, bannerVisible: false };
   const startIdx = currentPosition < ACTIVE_BAR_INDEX ? 0 : currentPosition - ACTIVE_BAR_INDEX;
   const bannerLeft = totalBars - startIdx;
   const bannerVisible = bannerLeft < VISIBLE_BAR_COUNT && bannerLeft + BANNER_BAR_SPAN > 0;
@@ -57,13 +56,11 @@ function pickBarHeight({ animatedHeights, animatedIdx, dataIdx, programData, tot
  *   resistance: number,
  *   isComplete: boolean,
  *   programLabel?: string,
- *   volume?: number,
  *   elapsedSeconds?: number,
  *   targetDuration?: number,
- *   isInfinity?: boolean,
  * }} props
  */
-export default function SessionTimeline({ programData, currentPosition, resistance, isComplete, programLabel, volume = 100, elapsedSeconds = 0, targetDuration = 0, isInfinity = false }) {
+export default function SessionTimeline({ programData, currentPosition, resistance, isComplete, programLabel, elapsedSeconds = 0, targetDuration = 0 }) {
   const totalBars = programData.length;
   const { heights, bannerVisible: flickerVisible, eqPhaseMs } = useCompletionAnimation(VISIBLE_BAR_COUNT, isComplete);
 
@@ -72,11 +69,11 @@ export default function SessionTimeline({ programData, currentPosition, resistan
     if (!isComplete) { cheerFiredRef.current = false; return; }
     if (cheerFiredRef.current) return;
     cheerFiredRef.current = true;
-    playFinishCheer({ durationMs: eqPhaseMs, volumePct: volume });
-  }, [isComplete, eqPhaseMs, volume]);
+    playFinishCheer({ durationMs: eqPhaseMs });
+  }, [isComplete, eqPhaseMs]);
 
   const { startIdx, highlightSlot } = deriveScrollWindow(currentPosition);
-  const { bannerLeft, bannerVisible: scrollingVisible } = deriveBannerPosition(currentPosition, totalBars, isInfinity);
+  const { bannerLeft, bannerVisible: scrollingVisible } = deriveBannerPosition(currentPosition, totalBars);
   const showScrollingBanner = !isComplete && scrollingVisible;
   const showFlickerBanner = isComplete && flickerVisible;
   const isCoveredByBanner = (i) => showScrollingBanner && i + 1 > bannerLeft && i < bannerLeft + BANNER_BAR_SPAN;

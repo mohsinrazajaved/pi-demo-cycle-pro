@@ -14,6 +14,22 @@ const NOTE_INTERVAL = 0.16;
 const NOTE_DURATION = 0.14;
 const NOISE_BURST_COUNT = 14;
 const NOISE_SPREAD = 0.85;
+/** Upper bound of `burstSec` in scheduleNoiseBurst (0.18 + random * 0.12). */
+const MAX_BURST_SEC = 0.18 + 0.12;
+/** Extra ms after the last scheduled node before closing the AudioContext (ramps + browser tail). */
+const CONTEXT_CLOSE_TAIL_MS = 2200;
+
+/**
+ * Latest time (seconds from `start`) any cheer source is still meaningfully active.
+ * @param {number} durationSec
+ */
+function computeCheerLatestEndSec(durationSec) {
+  const arpEnd = (CHIPTUNE.length - 1) * NOTE_INTERVAL + NOTE_DURATION;
+  const maxNoiseStart =
+    ((NOISE_BURST_COUNT - 1) / NOISE_BURST_COUNT) * (durationSec * NOISE_SPREAD);
+  const maxNoiseEnd = maxNoiseStart + MAX_BURST_SEC;
+  return Math.max(arpEnd, maxNoiseEnd);
+}
 
 /** @param {AudioContext} ctx @param {number} seconds */
 function makeNoiseBuffer(ctx, seconds) {
@@ -58,17 +74,19 @@ function scheduleArpeggio(ctx, master, startTime, hardEnd) {
   });
 }
 
-/** @param {{ durationMs: number, volumePct?: number }} options */
-export function playFinishCheer({ durationMs, volumePct = 100 }) {
+/** @param {{ durationMs: number }} options */
+export function playFinishCheer({ durationMs }) {
   try {
     const AudioCtor = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
     const ctx = /** @type {AudioContext} */ (new AudioCtor());
+    if (ctx.state === 'suspended') void ctx.resume();
+
     const start = ctx.currentTime;
     const durationSec = durationMs / 1000;
     const end = start + durationSec;
 
     const master = ctx.createGain();
-    master.gain.value = Math.max(0, Math.min(1, volumePct / 100));
+    master.gain.value = 1;
     master.connect(ctx.destination);
 
     for (let i = 0; i < NOISE_BURST_COUNT; i += 1) {
@@ -76,7 +94,11 @@ export function playFinishCheer({ durationMs, volumePct = 100 }) {
     }
     scheduleArpeggio(ctx, master, start, end);
 
-    setTimeout(() => ctx.close(), durationMs + 500);
+    const latestEndSec = computeCheerLatestEndSec(durationSec);
+    const closeAfterMs = Math.ceil(latestEndSec * 1000) + CONTEXT_CLOSE_TAIL_MS;
+    setTimeout(() => {
+      void ctx.close();
+    }, closeAfterMs);
   } catch (_) {
     // graceful no-op when AudioContext is unavailable
   }

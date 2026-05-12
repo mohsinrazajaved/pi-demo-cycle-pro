@@ -227,7 +227,7 @@ export default function PulseView() {
 
         {/* Bottom — 108px */}
         <div style={{ height: '108px', flexShrink: 0 }}>
-          <SessionTimeline programData={programData} currentPosition={programPosition} resistance={resistance} isComplete={false} programLabel="" elapsedSeconds={elapsedSeconds} targetDuration={targetDuration} isInfinity={isInfinity} />
+          <SessionTimeline programData={programData} currentPosition={programPosition} resistance={resistance} isComplete={false} programLabel="" elapsedSeconds={elapsedSeconds} targetDuration={targetDuration} />
         </div>
       </div>
     </div>

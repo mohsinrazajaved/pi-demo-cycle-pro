@@ -169,6 +169,14 @@ export const PATTERN_BASE = {
 };
 
 export function generateSessionPattern(programId, baseResistance = 5) {
+  // GC Fat Burn: flat profile; bar count scales with chosen duration (same 2 bars/min as interval presets).
+  const fatBurnMins = /^gc-fat-burn-(\d+)$/.exec(programId);
+  if (fatBurnMins) {
+    const mins = Number(fatBurnMins[1]);
+    const bars = mins * 2;
+    const level = Math.min(30, Math.max(1, baseResistance));
+    return Array(bars).fill(level);
+  }
   if (PROGRAM_PATTERNS[programId]) {
     const patternBase = PATTERN_BASE[programId] ?? 1;
     const offset = Math.max(0, baseResistance - patternBase);

@@ -31,9 +31,23 @@ export const DEFAULT_TARGET_DURATION_SEC = 30 * 60; // 30 minutes
 // stored 0 / NaN / negative never silences the system on first boot.
 export const DEFAULT_VOLUME_PERCENT = 100;
 
+export function resetVolumeToDefault() {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('bikeVolume', String(DEFAULT_VOLUME_PERCENT));
+  }
+  return DEFAULT_VOLUME_PERCENT;
+}
+
 export function getVolume() {
-  const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('bikeVolume') : null;
+  const raw = typeof localStorage !== 'undefined'
+    ? localStorage.getItem('bikeVolume')
+    : null;
+
   const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0 || n > 100) return DEFAULT_VOLUME_PERCENT;
+
+  if (!Number.isFinite(n) || n < 0 || n > 100) {
+    return DEFAULT_VOLUME_PERCENT;
+  }
+
   return n;
 }

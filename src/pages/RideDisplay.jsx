@@ -71,7 +71,6 @@ export default function RideDisplay() {
   const [showHomeConfirm, setShowHomeConfirm] = useState(false);
   const [showProgramComplete, setShowProgramComplete] = useState(false);
   const [isManual, setIsManual] = useState(false);
-  const [timeMultiplier, setTimeMultiplier] = useState(1);
 
   const resistanceRef = useRef(resistance);
   const isManualRef = useRef(isManual);
@@ -190,7 +189,7 @@ export default function RideDisplay() {
           try {
             const msg = JSON.parse(e.data);
             if (msg.type === 'resistance') {
-              setResistance(prev => Math.min(30, Math.max(1, prev + (msg.delta || 0))));
+              setResistance(prev => Math.min(30, Math.max(1, prev - (msg.delta || 0))));
             } else if (msg.type === 'button_press') {
               openPulseViewLikeGpioButton();
             }
@@ -371,10 +370,8 @@ export default function RideDisplay() {
               resistance={resistance}
               isComplete={showProgramComplete}
               programLabel={programLabel}
-              volume={volume}
               elapsedSeconds={elapsedSeconds}
               targetDuration={targetDuration}
-              isInfinity={isInfinity}
             />
           </div>
 

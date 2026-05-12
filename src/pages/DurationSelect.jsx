@@ -22,7 +22,7 @@ const TIME_OPTIONS = [
   { label: '∞',   value: Infinity },
 ];
 
-const TIMED_PROGRAMS = ['small-interval', 'large-interval', 'small-step', 'big-step', 'small-plateau', 'large-plateau'];
+const TIMED_PROGRAMS = ['gc-fat-burn', 'small-interval', 'large-interval', 'small-step', 'big-step', 'small-plateau', 'large-plateau'];
 
 export default function DurationSelect() {
   const navigate = useNavigate();

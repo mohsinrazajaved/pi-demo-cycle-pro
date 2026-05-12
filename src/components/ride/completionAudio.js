@@ -1,3 +1,5 @@
+import { getVolume } from '@/config';
+
 let primedAudio = null;
 
 export function primeAudio() {
@@ -52,7 +54,7 @@ function scheduleNoiseBurst(ctx, master, at) {
   filter.Q.value = 1.2;
   const gain = ctx.createGain();
   gain.gain.setValueAtTime(0, at);
-  gain.gain.linearRampToValueAtTime(0.5, at + 0.03);
+  gain.gain.linearRampToValueAtTime(0.85, at + 0.03);
   gain.gain.exponentialRampToValueAtTime(0.001, at + burstSec);
   noise.connect(filter); filter.connect(gain); gain.connect(master);
   noise.start(at); noise.stop(at + burstSec);
@@ -67,7 +69,7 @@ function scheduleArpeggio(ctx, master, startTime, hardEnd) {
     osc.type = 'square';
     osc.frequency.value = freq;
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.18, at);
+    gain.gain.setValueAtTime(0.40, at);
     gain.gain.exponentialRampToValueAtTime(0.001, at + NOTE_DURATION);
     osc.connect(gain); gain.connect(master);
     osc.start(at); osc.stop(at + NOTE_DURATION);
@@ -85,9 +87,22 @@ export function playFinishCheer({ durationMs }) {
     const durationSec = durationMs / 1000;
     const end = start + durationSec;
 
+    // Master gain follows the user volume slider, matching every other sound effect.
     const master = ctx.createGain();
-    master.gain.value = 1;
-    master.connect(ctx.destination);
+    master.gain.value = getVolume() / 100;
+
+    // Soft limiter — catches transients so the Pi's small speaker can't clip even
+    // at slider = 100. Standard "loudness maximizer" defaults: low threshold,
+    // fast attack, slow-ish release.
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -6;
+    limiter.knee.value = 6;
+    limiter.ratio.value = 12;
+    limiter.attack.value = 0.003;
+    limiter.release.value = 0.1;
+
+    master.connect(limiter);
+    limiter.connect(ctx.destination);
 
     for (let i = 0; i < NOISE_BURST_COUNT; i += 1) {
       scheduleNoiseBurst(ctx, master, start + (i / NOISE_BURST_COUNT) * (durationSec * NOISE_SPREAD));

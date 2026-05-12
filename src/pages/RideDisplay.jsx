@@ -153,6 +153,9 @@ export default function RideDisplay() {
     const duration = params.get('duration');
     if (duration === 'infinity') patch.isInfinity = true;
     else if (duration) { patch.targetDuration = Number(duration) * 60; patch.isInfinity = false; }
+    // Bare "Manual" tile from Launcher arrives with no ?duration= — treat it as
+    // an infinite manual session instead of silently inheriting the 2-hour default.
+    else if (pid === 'manual') { patch.isInfinity = true; setIsManual(true); }
     if (params.get('resistance')) setResistance(Number(params.get('resistance')));
     if (params.get('manual') === '1') setIsManual(true);
     updateWorkout(patch);
@@ -229,6 +232,10 @@ export default function RideDisplay() {
   }, [stateRef]);
 
   // RideDisplay-only side effects on each provider tick: coin sound + program-complete UI.
+  // The `autoSaveFired` flag in the provider is the single source of truth — it
+  // makes the save idempotent regardless of how many ticks fire stop=true (e.g.
+  // user taps Play after game-over) and lets us catch a completion that fired
+  // while RideDisplay was unmounted (e.g. user on PulseView during the last tick).
   useEffect(() => {
     const unsubscribe = subscribeTick(({ next, stop }) => {
       const newMilestone = Math.floor(next.stats.calories / 100);
@@ -236,13 +243,28 @@ export default function RideDisplay() {
         lastCalorieMilestoneRef.current = newMilestone;
         playCoinSound(volumeRef.current);
       }
-      if (stop) {
+      if (stop && !next.autoSaveFired) {
+        updateWorkout({ autoSaveFired: true });
         setShowProgramComplete(true);
         setTimeout(() => autoSave(), 200);
       }
     });
     return unsubscribe;
-  }, [subscribeTick, autoSave]);
+  }, [subscribeTick, autoSave, updateWorkout]);
+
+  // Recovery: if the workout finished while we were on another screen (e.g. PulseView),
+  // the tick listener above never fired here, so on remount we detect the
+  // already-completed state and save now.
+  useEffect(() => {
+    const s = stateRef.current;
+    const wasCompleted = !s.isInfinity && s.targetDuration > 0 && s.elapsedSeconds >= s.targetDuration;
+    if (wasCompleted && !s.autoSaveFired) {
+      updateWorkout({ autoSaveFired: true });
+      setShowProgramComplete(true);
+      setTimeout(() => autoSave(), 200);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleStop = async () => {
     if (elapsedSeconds < 10) { resetWorkout(true); return; }
@@ -323,19 +345,39 @@ export default function RideDisplay() {
               {/* Control buttons — right half */}
               <div style={{ width: '50%', paddingLeft: '4px' }}>
                 <div className="grid grid-cols-2 h-full" style={{ gridTemplateRows: 'repeat(3, 1fr)', gap: '6px' }}>
-                  {!isRunning || isPaused ? (
-                    <button onClick={() => { playTypewriterClick(); primeAudio(); setIsRunning(true); setIsPaused(false); }}
-                      className="rounded-md font-bold flex items-center justify-center transition-all active:scale-95"
-                      style={{ background: '#3f3f3f' }}>
-                      <Play style={{ width: '24px', height: '24px' }} className="text-[#FF3F03]" strokeWidth={2.5} />
-                    </button>
-                  ) : (
-                    <button onClick={() => { playTypewriterClick(); setIsPaused(true); }}
-                      className="rounded-md font-bold flex items-center justify-center transition-all active:scale-95"
-                      style={{ background: '#3f3f3f' }}>
-                      <Pause style={{ width: '24px', height: '24px' }} className="text-[#FF3F03]" strokeWidth={2.5} />
-                    </button>
-                  )}
+                  {(() => {
+                    // Derived from provider state so it survives navigation (e.g. round-trip
+                    // through PulseView). Disabling Play here closes the "tap Play after
+                    // game-over" loophole that would otherwise re-fire stop=true on the
+                    // next tick and double-save the workout.
+                    const isCompleted =
+                      !isInfinity && targetDuration > 0 && elapsedSeconds >= targetDuration;
+                    if (isCompleted) {
+                      return (
+                        <button disabled
+                          className="rounded-md flex items-center justify-center opacity-30"
+                          style={{ background: '#3f3f3f', cursor: 'not-allowed' }}>
+                          <Play style={{ width: '24px', height: '24px' }} className="text-zinc-500" strokeWidth={2.5} />
+                        </button>
+                      );
+                    }
+                    if (!isRunning || isPaused) {
+                      return (
+                        <button onClick={() => { playTypewriterClick(); primeAudio(); setIsRunning(true); setIsPaused(false); }}
+                          className="rounded-md font-bold flex items-center justify-center transition-all active:scale-95"
+                          style={{ background: '#3f3f3f' }}>
+                          <Play style={{ width: '24px', height: '24px' }} className="text-[#FF3F03]" strokeWidth={2.5} />
+                        </button>
+                      );
+                    }
+                    return (
+                      <button onClick={() => { playTypewriterClick(); setIsPaused(true); }}
+                        className="rounded-md font-bold flex items-center justify-center transition-all active:scale-95"
+                        style={{ background: '#3f3f3f' }}>
+                        <Pause style={{ width: '24px', height: '24px' }} className="text-[#FF3F03]" strokeWidth={2.5} />
+                      </button>
+                    );
+                  })()}
                   {[
                     { icon: Home,    action: handleHomeClick },
                     { icon: Sun,     action: () => setShowBrightnessSlider(true) },
@@ -370,8 +412,6 @@ export default function RideDisplay() {
               resistance={resistance}
               isComplete={showProgramComplete}
               programLabel={programLabel}
-              elapsedSeconds={elapsedSeconds}
-              targetDuration={targetDuration}
             />
           </div>
 

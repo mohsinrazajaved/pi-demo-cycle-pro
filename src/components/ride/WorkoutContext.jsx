@@ -28,6 +28,11 @@ const initialState = {
   programId: '',
   programLabel: '',
   stats: initialStats,
+  // True once the post-completion autosave has fired for this session. Cleared on
+  // `reset()`. Prevents double-saves if the user taps Play again after game-over,
+  // and gives RideDisplay a way to handle a completion that fired while it was
+  // unmounted (e.g., while the user was on PulseView).
+  autoSaveFired: false,
 };
 
 export function WorkoutProvider({ children }) {

@@ -28,7 +28,14 @@ function deriveBannerPosition(currentPosition, totalBars) {
   if (totalBars <= 0) return { bannerLeft: BANNER_ENTRY_SLOT, bannerVisible: false };
   const startIdx = currentPosition < ACTIVE_BAR_INDEX ? 0 : currentPosition - ACTIVE_BAR_INDEX;
   const bannerLeft = totalBars - startIdx;
-  const bannerVisible = bannerLeft < VISIBLE_BAR_COUNT && bannerLeft + BANNER_BAR_SPAN > 0;
+  // Gate on `currentPosition >= ACTIVE_BAR_INDEX` so 10-min programs (20 bars,
+  // just under the 21-slot visible window) don't show the end-marker during
+  // the 5-minute warmup. After this, all programs reveal the banner only
+  // during the scrolling phase, i.e., the last ~10 bars.
+  const bannerVisible =
+    currentPosition >= ACTIVE_BAR_INDEX &&
+    bannerLeft < VISIBLE_BAR_COUNT &&
+    bannerLeft + BANNER_BAR_SPAN > 0;
   return { bannerLeft, bannerVisible };
 }
 
@@ -56,11 +63,9 @@ function pickBarHeight({ animatedHeights, animatedIdx, dataIdx, programData, tot
  *   resistance: number,
  *   isComplete: boolean,
  *   programLabel?: string,
- *   elapsedSeconds?: number,
- *   targetDuration?: number,
  * }} props
  */
-export default function SessionTimeline({ programData, currentPosition, resistance, isComplete, programLabel, elapsedSeconds = 0, targetDuration = 0 }) {
+export default function SessionTimeline({ programData, currentPosition, resistance, isComplete, programLabel }) {
   const totalBars = programData.length;
   const { heights, bannerVisible: flickerVisible, eqPhaseMs } = useCompletionAnimation(VISIBLE_BAR_COUNT, isComplete);
 
@@ -76,6 +81,7 @@ export default function SessionTimeline({ programData, currentPosition, resistan
   const { bannerLeft, bannerVisible: scrollingVisible } = deriveBannerPosition(currentPosition, totalBars);
   const showScrollingBanner = !isComplete && scrollingVisible;
   const showFlickerBanner = isComplete && flickerVisible;
+  /** @param {number} i */
   const isCoveredByBanner = (i) => showScrollingBanner && i + 1 > bannerLeft && i < bannerLeft + BANNER_BAR_SPAN;
 
   return (

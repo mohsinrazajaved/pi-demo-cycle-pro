@@ -2,7 +2,7 @@ const GAME_OVER_SRC = '/gameover.png';
 
 const FLICKER_KEYFRAMES = `
   @keyframes gameOverFlicker {
-    0%   { opacity: 0; transform: translateX(-50%) scale(0.8); filter: brightness(3); }
+    0%   { opacity: 1; transform: translateX(-50%) scale(0.8); filter: brightness(3); }
     10%  { opacity: 1; transform: translateX(-50%) scale(1.15); filter: brightness(2); }
     20%  { opacity: 0; transform: translateX(-50%) scale(1.05); }
     30%  { opacity: 1; transform: translateX(-50%) scale(1.1); filter: brightness(2.5); }
